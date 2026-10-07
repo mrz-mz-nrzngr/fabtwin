@@ -1,0 +1,159 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://fabtwin.example/schema/event/1",
+  "title": "FabTwin event, schema version 1",
+  "description": "One equipment or lot event. A WebSocket frame carries one event, an array of events, or an object with an `events` array.",
+  "definitions": {
+    "e10State": {
+      "enum": ["PRODUCTIVE", "STANDBY", "ENGINEERING", "SCHEDULED_DOWN", "UNSCHEDULED_DOWN"]
+    },
+    "base": {
+      "type": "object",
+      "required": ["v", "seq", "t", "source", "type", "data"],
+      "properties": {
+        "v": { "const": 1 },
+        "seq": { "type": "integer", "minimum": 1 },
+        "t": { "type": "integer", "minimum": 0, "description": "Milliseconds since the Unix epoch, UTC." },
+        "source": { "type": "string", "minLength": 1 }
+      }
+    },
+    "equipmentStateChanged": {
+      "type": "object",
+      "properties": {
+        "type": { "const": "equipment.state_changed" },
+        "data": {
+          "type": "object",
+          "required": ["toolId", "from", "to"],
+          "additionalProperties": false,
+          "properties": {
+            "toolId": { "type": "string", "minLength": 1 },
+            "from": { "oneOf": [{ "$ref": "#/definitions/e10State" }, { "type": "null" }] },
+            "to": { "$ref": "#/definitions/e10State" },
+            "reason": { "type": "string" },
+            "lotId": { "type": ["string", "null"] },
+            "recipe": { "type": ["string", "null"] }
+          }
+        }
+      }
+    },
+    "alarmSet": {
+      "type": "object",
+      "properties": {
+        "type": { "const": "alarm.set" },
+        "data": {
+          "type": "object",
+          "required": ["alarmId", "code", "severity", "text"],
+          "additionalProperties": false,
+          "properties": {
+            "alarmId": { "type": "string", "minLength": 1 },
+            "code": { "type": "string", "minLength": 1 },
+            "severity": { "enum": ["info", "warning", "critical"] },
+            "text": { "type": "string" },
+            "toolId": { "type": "string" },
+            "lotId": { "type": "string" },
+            "alid": { "type": "integer" }
+          }
+        }
+      }
+    },
+    "alarmCleared": {
+      "type": "object",
+      "properties": {
+        "type": { "const": "alarm.cleared" },
+        "data": {
+          "type": "object",
+          "required": ["alarmId", "code"],
+          "additionalProperties": false,
+          "properties": {
+            "alarmId": { "type": "string", "minLength": 1 },
+            "code": { "type": "string", "minLength": 1 },
+            "toolId": { "type": "string" },
+            "lotId": { "type": "string" },
+            "clearedBy": { "type": "string" }
+          }
+        }
+      }
+    },
+    "lotStarted": {
+      "type": "object",
+      "properties": {
+        "type": { "const": "lot.started" },
+        "data": {
+          "type": "object",
+          "required": ["lotId", "toolId", "stepIndex", "recipe"],
+          "additionalProperties": false,
+          "properties": {
+            "lotId": { "type": "string", "minLength": 1 },
+            "toolId": { "type": "string", "minLength": 1 },
+            "stepIndex": { "type": "integer", "minimum": 0 },
+            "recipe": { "type": "string", "minLength": 1 },
+            "route": { "type": "string" },
+            "wafers": { "type": "integer", "minimum": 1 },
+            "hot": { "type": "boolean" }
+          }
+        }
+      }
+    },
+    "lotCompleted": {
+      "type": "object",
+      "properties": {
+        "type": { "const": "lot.completed" },
+        "data": {
+          "type": "object",
+          "required": ["lotId", "toolId", "stepIndex", "recipe", "durationS", "final"],
+          "additionalProperties": false,
+          "properties": {
+            "lotId": { "type": "string", "minLength": 1 },
+            "toolId": { "type": "string", "minLength": 1 },
+            "stepIndex": { "type": "integer", "minimum": 0 },
+            "recipe": { "type": "string", "minLength": 1 },
+            "durationS": { "type": "number", "minimum": 0 },
+            "final": { "type": "boolean" },
+            "route": { "type": "string" },
+            "hot": { "type": "boolean" },
+            "measurement": {
+              "type": "object",
+              "required": ["param", "value", "unit"],
+              "additionalProperties": false,
+              "properties": {
+                "param": { "type": "string" },
+                "value": { "type": "number" },
+                "unit": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "collectionEvent": {
+      "type": "object",
+      "properties": {
+        "type": { "const": "collection_event" },
+        "data": {
+          "type": "object",
+          "required": ["ceid", "name"],
+          "additionalProperties": false,
+          "properties": {
+            "ceid": { "type": "integer", "minimum": 0 },
+            "name": { "type": "string", "minLength": 1 },
+            "toolId": { "type": "string" },
+            "lotId": { "type": "string" },
+            "reports": {
+              "type": "object",
+              "additionalProperties": { "type": ["string", "number", "boolean", "null"] }
+            }
+          }
+        }
+      }
+    }
+  },
+  "allOf": [{ "$ref": "#/definitions/base" }],
+  "oneOf": [
+    { "$ref": "#/definitions/equipmentStateChanged" },
+    { "$ref": "#/definitions/alarmSet" },
+    { "$ref": "#/definitions/alarmCleared" },
+    { "$ref": "#/definitions/lotStarted" },
+    { "$ref": "#/definitions/lotCompleted" },
+    { "$ref": "#/definitions/collectionEvent" }
+  ]
+}
