@@ -16,7 +16,12 @@ The shift lead makes one decision over and over: which thing needs me right now,
 
 ## Theme
 
-Dark only, no toggle. Reason: MES consoles run in dim control rooms and the 3D scene needs a dark ground for status lamps to read as light sources. A light theme would mean re-lighting the scene for no user benefit, so none is shipped (R-21).
+Dark only, no toggle, and no light theme is planned. Two reasons.
+
+1. **The control room.** MES consoles are watched in dim rooms for a whole shift, and a bright page there is glare, not clarity.
+2. **The 3D lighting.** The status lamps and floor pads in the scene are lights and glows, and they read as lights only against a dark ground. The scene has one key light, a dim hemisphere fill and a shadow map rendered once. A light theme would mean a second lighting set-up, a second set of colours for the five status states that still pass contrast on white, and a second round of checking, for no benefit to the shift lead.
+
+The cost is that people who need a light page (bright rooms, some visual conditions) have no option inside the app. Their browser's forced-colours and zoom still work, text meets contrast on the dark panels (the ratios are in the palette table), and the keyboard focus ring is visible. That is listed under Known limitations in the README.
 
 ## Palette
 
@@ -29,7 +34,7 @@ Dark only, no toggle. Reason: MES consoles run in dim control rooms and the 3D s
 | `--ink` | `#e7edf2` | Body text. 14.9:1 on panel. |
 | `--muted` | `#9bacb9` | Secondary text. 7.5:1 on panel. |
 | `--steel` | `#7fa6c4` | Second core color: links, axis lines, chart neutrals. Steel is the colour of the metal the fab is made of. 6.8:1 on panel. |
-| `--accent` | `#ff5c93` | The one accent: hot lots, the selected object, the primary action. Rose, because hot lots are tagged red-pink on real fab floors and it must not collide with any status colour. Text on it is `#1a0a12`, 6.6:1. Accent on panel is 6.0:1. |
+| `--accent` | `#ff5c93` | The one accent: hot lots, the selected object, the primary action. Rose, because it has to stand apart from all five status colours and from the steel neutrals, and hot lots need one colour that nothing else uses. Text on it is `#1a0a12`, 6.6:1. Accent on panel is 6.0:1. |
 
 E10 status colours are a separate data-encoding system, not decoration. Each is always paired with a text label and a distinct glyph shape, so colour is never the only channel.
 
@@ -71,3 +76,16 @@ Phones (under 768 px) get a 2D floor map instead of the WebGL scene, with a bott
 ## Copy
 
 Plain statements, sentence case, no em dashes, no buzzwords. Buttons say what they do: "Start shift", "Send to PM now", "Assign repair crew".
+
+## Keyboard
+
+The 3D floor is a single focus stop. Tab reaches it, the arrow keys move the selection to the nearest tool in that direction (sideways drift counts double, so "right" follows the row), N and P walk the tools in reading order, Enter flies the camera there, and 0 to 5 return to the overview or a bay. The selection is spoken through a polite live region, and a Keyboard help button lists every key. Reason: a canvas is invisible to a keyboard, so the tools need a pointer-free way to be chosen, and a pure function (`src/scene/nav.ts`) decides the next tool so it is tested without a canvas.
+
+## Live mode
+
+Live mode shows what a feed reports and says so. The console keeps one layout for simulated and live data: tool states, alarms, Gantt and genealogy come from the events, KPIs, WIP and SPC are computed from them, and FOUP motion is drawn by the live twin from lot events. The vehicles in live mode are synthesised because no feed carries vehicle positions, and the interface names them as such. Reason: showing a drawn vehicle as if it were a measured one would be the one lie this product cannot afford.
+
+## Integrations page
+
+One row per input and output, with a tier mark (a distinct glyph per tier, never colour alone), the protocol, a summary, what the tier does and does not prove, the recorded-run pointer and the setup steps with copyable commands. The page renders `src/integrations/catalog.ts`, and a test checks the tiers and the commands against `package.json` and `docs/integration-runs.md`, so the page cannot promise more than a recorded run shows. Not-proven items are listed as such instead of being hidden.
+

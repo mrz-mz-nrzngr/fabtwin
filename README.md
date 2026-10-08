@@ -15,6 +15,10 @@ You run the shift of a small 300 mm fab: five bays, 24 tools, two stockers and a
 | `src/sim` | The engine. Pure TypeScript, no DOM. Event heap, routing, dispatch rules, SEMI E10 tool states, MTBF/MTTR failures, PM, queue-time limits, OHT transport, SPC, KPIs, scoring. |
 | `src/worker` | Hosts the engine in a Web Worker and advances it at 1x, 10x or 60x. |
 | `src/events` | The versioned JSON event schema, validator, JSON Schema, and a WebSocket live client. |
+| `src/live` | Live mode. `LiveTwin` turns an event stream into the same snapshot the simulator produces, so KPIs, WIP, SPC and FOUP motion work on real traffic. |
+| `src/integrations` | Protocol adapters (Sparkplug B over MQTT, OPC UA mapping, the shared naming convention) and the catalog behind the Integrations page. |
+| `src/server` and `src/app/api` | The read-only MES REST API, its OpenAPI description and the CSV and JSON exports. |
+| `services/opcua-bridge` | A small Node service with its own `package.json` that subscribes to an OPC UA server and serves schema v1 events. |
 | `src/store` | Zustand store plus event-sourced read models (alarm log, Gantt segments, lot genealogy). |
 | `src/scene` | React Three Fiber scene. All geometry is procedural and instanced. |
 | `src/ui` | MES screens, tool and lot panels, charts (hand-written SVG), 2D floor map, dialogs. |
@@ -34,18 +38,19 @@ flowchart LR
     T["R3F scene<br/>instanced meshes"]
     M["2D floor map<br/>phones"]
   end
-  B["Future SECS/GEM bridge<br/>or scripts/mock-live-server"]
+  B["Live sources<br/>fab in a box (SECS/GEM), OPC UA bridge,<br/>Sparkplug B over MQTT, mock-live-server"]
   E -- "FabEvent[] (schema v1)" --> S
   E -- "Snapshot, about 10 Hz" --> S
   S --> R --> UI
   S -- "non-reactive reads per frame" --> T
   S --> M
   UI -- "Command: rule, expedite, PM, crew, hold" --> E
-  B -- "WebSocket, schema v1" --> L["LiveClient<br/>validates every frame"]
+  B -- "schema v1" --> L["LiveTwin<br/>validates every frame,<br/>derives KPIs and FOUP motion"]
   L --> R
+  L --> T
 ```
 
-Two data paths run from the worker. The **event stream** (equipment state changes, alarms, lot start and complete, collection events) is the same format a real bridge would send, and the console builds its alarm list, Gantt and lot genealogy only from it. The **snapshot** carries what a stream cannot, such as queue contents and vehicle plans, and feeds the 3D scene. Because the read models depend on events only, live mode is a drop-in source.
+Two data paths run from the worker. The **event stream** (equipment state changes, alarms, lot start and complete, collection events) is the same format a real bridge would send, and the console builds its alarm list, Gantt and lot genealogy only from it. The **snapshot** carries what a stream cannot, such as queue contents and vehicle plans, and feeds the 3D scene. Because the read models depend on events only, live mode is a drop-in source: the live twin rebuilds the snapshot from lot and equipment events, and the same screens render it.
 
 ## Simulation model
 
@@ -94,7 +99,7 @@ Ties break on lot id, so ordering is total.
 - Single-lot processing on every tool, no batch tools, no cascading or cluster tools.
 - All tools in a bay are qualified for every recipe of that bay. A setup costs time but no tool is restricted.
 - Lots reach a tool only through a stocker. There is no direct tool to tool handoff.
-- Transport is a single-direction loop with no vehicle collisions or blocking. A vehicle takes the lot at its pickup port and travels forward.
+- Transport is a single-lane loop with blocking. The track is cut into cells a little longer than a vehicle. A vehicle holds its cell and books the next one before crossing, and one that cannot enter waits where it is, so a stopped vehicle backs up the ones behind it. Idle vehicles wait in a siding and block nothing. A vehicle takes the lot at its pickup port and travels forward. This is a design decision (`docs/VERIFICATION.md`, D-4), not a fitted model of any real hoist system.
 - Warm-start WIP (48 lots) begins mid-route with a synthetic age, so early cycle times include time before the shift.
 - Failures, drift and excursions are drawn from distributions chosen for gameplay, not fitted to a real fab.
 - The 4-hour shift stands in for a day of flow. Absolute times are not realistic. Ratios (X-factor around 3, litho utilisation around 75 percent) are in a plausible range.
@@ -139,13 +144,96 @@ Events are versioned JSON (`v: 1`): `equipment.state_changed`, `alarm.set`, `ala
 }
 ```
 
-Every event of a simulated shift is validated against the JSON Schema and the runtime validator in the test suite. **Live mode** (top bar) connects to a WebSocket sending one event, an array, or `{ "events": [...] }`, validates every frame, drops invalid ones with a count, and reconnects with backoff. To try it without equipment:
+Every event of a simulated shift is validated against the JSON Schema and the runtime validator in the test suite.
+
+**Live mode** (top bar) replaces the simulator with a live source. The console accepts a WebSocket that sends one event, an array, or `{ "events": [...] }` (several URLs can be merged), or an MQTT broker that carries Sparkplug B. Every frame is validated, invalid ones are dropped with a count, and the connection retries with backoff. In live mode the simulator pauses and the screens follow the feed:
+
+- Tool states, alarms, the Gantt, tool panels and lot genealogy come straight from the events.
+- KPIs (shipped, WIP, throughput, cycle time, X-factor, on-time delivery), WIP by step and the SPC charts are computed from the lot events and measurements.
+- FOUP motion is **synthesised**. The stream has no vehicle positions, so a finished step sends a drawn vehicle to the tool and carries the FOUP to the nearest stocker downstream. The synthesised vehicles do not block each other; blocking exists only in the simulator.
+
+To try it without equipment:
 
 ```bash
 npm run mock-live        # ws://localhost:8787, replays a simulated shift at 30x
 ```
 
-Then open the app, choose Live mode and connect. In live mode the simulator pauses, and the equipment table, Gantt, alarms, tool panels and genealogy follow the socket. A separate SECS/GEM simulator project is planned to produce this stream from real equipment messages.
+Then open the app, choose Live mode, pick WebSocket events and connect.
+
+## Integrations
+
+The **Integrations** page (`/integrations`, linked from the console) lists every input and output, the tier it has earned and the setup steps. The tiers follow one rule, and no line claims more than its recorded run proves. Transcripts, dates and versions are in [docs/integration-runs.md](docs/integration-runs.md); every protocol fact is numbered and sourced in [docs/VERIFICATION.md](docs/VERIFICATION.md).
+
+| Integration | Direction | Tier | Ran against |
+|---|---|---|---|
+| SECS/GEM equipment, fab in a box | in | Hardware-ready | 8 GemBench equipment simulators over HSMS |
+| Sparkplug B over MQTT | in | Live-tested | Mosquitto 2.1.2, with an edge-node simulator |
+| OPC UA | in | Hardware-ready | a node-opcua sample server, with a server outage and recovery |
+| Event WebSocket, schema v1 | in | Live-tested | the live client tests and every run |
+| MES REST API | out | Live-tested | curl against the production build |
+| CSV and JSON exports | out | Live-tested | curl against the production build |
+| Event stream from the bridges | out | Live-tested | the headless probe |
+| Docker compose plant in a box | | Not proven | not written |
+
+Live-tested means a real server that is not our code. Hardware-ready means a simulator of the device, with the edge code for the real one included. None of the integrations has been run against a physical tool, a PLC or a vendor's product, and none is in the account-ready tier.
+
+### Fab in a box
+
+Eight equipment simulators from GemBench (a sibling project: a SECS/GEM simulator written in C#) (litho, etch, deposition, CMP, metrology), each its own process speaking HSMS, and a MES host that dispatches lots with S2F41, reads metrology with S1F3 and raises tool faults. GemBench's bridge turns what the tools do into schema v1 events and the host adds route knowledge. You need the .NET 10 SDK, git and Node 22.
+
+```bash
+npm ci
+npm run fab-in-a-box     # uses ../gembench, or GEMBENCH_REPO=<git url or path>; DURATION=300 stops it after 5 minutes
+```
+
+Then open the app, choose Live mode, WebSocket events, `ws://localhost:8787`. The script clones GemBench into a temporary folder and builds it there, so it never writes into your checkout. With no checkout it stops and says how to set `GEMBENCH_REPO`. Ctrl+C ends the equipment processes it started.
+
+### Sparkplug B and OPC UA
+
+```bash
+mosquitto -c integrations/mosquitto/fabtwin.conf     # MQTT on 18830, MQTT over WebSocket on 18831
+npm run sparkplug-sim                                # edge nodes with births, data, bdSeq and NDEATH wills
+```
+
+Live mode, Sparkplug B over MQTT, broker `ws://localhost:18831`, group `FabTwin`. For OPC UA run `npm --prefix services/opcua-bridge ci`, then `npm run opcua-sample-server` and `npm run opcua-bridge`, and connect to `ws://localhost:8788`. The metric and variable names are a FabTwin convention (`State`, `LotId`, `Recipe`, `Route`, `StepIndex`, `Alarm/<CODE>`, `Measurement/<CD|OVL|THK>`), described in `src/integrations/named.ts`.
+
+## MES API and exports
+
+A read-only JSON API for the fab, described by OpenAPI 3.1 at `/api/v1/openapi.json`:
+
+| Path | Returns |
+|---|---|
+| `/api/v1/lots`, `/api/v1/lots/{id}` | Lots with filters, and one lot with its genealogy |
+| `/api/v1/wip` | WIP by bay and step |
+| `/api/v1/tools`, `/api/v1/tools/{id}` | Tool states (SEMI E10 states), reasons, utilisation, next PM |
+| `/api/v1/alarms` | Alarms |
+| `/api/v1/kpis` | KPIs and the shift objectives |
+| `/api/v1/exports/{lot-history\|shift-report}.{csv\|json}` | CSV (RFC 4180) and JSON exports |
+
+```bash
+npm run build && npm start
+curl 'http://localhost:3000/api/v1/kpis?seed=1&t=7200'
+```
+
+By default it serves the deterministic simulation for a `seed` and a time `t` in seconds, so the same request always returns the same body, and every response carries `meta.simulated: true`. With `FABTWIN_LIVE_URLS` set on a self-hosted server, `source=live` serves state derived from a live feed. There is no authentication because it serves simulated data, and a serverless host serves the simulation only.
+
+## Keyboard
+
+The 3D floor can be used without a mouse. Tab to the floor (it announces itself), then:
+
+| Key | Action |
+|---|---|
+| Arrow keys | Select the next tool in that direction |
+| N and P | Next and previous tool in reading order |
+| Enter | Fly the camera to the selected tool |
+| Shift and arrow keys | Pan |
+| Plus and minus | Zoom |
+| [ and ] | Orbit left and right |
+| 0 | Overview |
+| 1 to 5 | Focus a bay: litho, etch, deposition, CMP, metrology |
+| Escape | Clear the selection |
+
+The question mark key (or the Keyboard help button) shows the same list. The selected tool is announced to screen readers, and the MES screens are ordinary buttons, tables and dialogs.
 
 ## Run it
 
@@ -160,13 +248,14 @@ npm run build && npm start
 ## Test it
 
 ```bash
-npm test             # 61 tests, about 2 seconds, no browser needed
+npm test             # 106 tests, about 1 second, no browser needed
+npm run typecheck:services   # type-checks the OPC UA bridge, which has its own packages
 npm run lint
 npm run typecheck
 npm run calibrate    # autopilot KPIs over several seeds, used to set the objectives
 ```
 
-What the tests cover: routing and re-entrancy, dispatch-rule ordering and tie-breaking, the E10 transition table and every transition in a full simulated shift, queue-time warning and violation detection, determinism (same seed, different step sizes, command replay, failure stability), player commands, SPC rules, the post-shift report, the event schema against both validators, the live client's reconnect behaviour and the event read models.
+What the tests cover: routing and re-entrancy, dispatch-rule ordering and tie-breaking, the E10 transition table and every transition in a full simulated shift, queue-time warning and violation detection, determinism (same seed, different step sizes, command replay, failure stability), player commands, SPC rules, the post-shift report, the event schema against both validators, the OHT blocking model, the live twin (KPIs and FOUP motion from events), the Sparkplug B codec and mapper (births, deaths, bdSeq, aliases, rebirth requests), the OPC UA mapper, the MES API against its OpenAPI schemas, keyboard navigation, the Integrations catalog against its recorded runs, the live client's reconnect behaviour and the event read models.
 
 CI (`.github/workflows/ci.yml`) runs lint, typecheck, tests and the production build.
 
@@ -175,23 +264,29 @@ CI (`.github/workflows/ci.yml`) runs lint, typecheck, tests and the production b
 ```
 src/sim        engine, config, dispatch rules, E10, SPC, score, report, tests
 src/events     schema types, validator, live client
+src/live       live twin and sources
+src/integrations  Sparkplug B, OPC UA mapping, catalog
+src/server     MES API logic, OpenAPI, exports (routes in src/app/api)
+services       opcua-bridge, with its own package.json
 src/worker     worker host and message protocol
 src/store      zustand store and event read models
 src/scene      procedural 3D scene
 src/ui         MES screens and charts
 src/art        isometric SVG illustrations
-scripts        calibrate.ts, mock-live-server.ts
-docs           event schema, screenshots
+scripts        calibrate, mock-live-server, fab-in-a-box, sparkplug-edge-sim, live-probe
+docs           event schema, OpenAPI, VERIFICATION.md, integration-runs.md, runs/, screenshots
 DESIGN.md      design direction
 ```
 
 ## Known limitations
 
 - The model is a game-shaped abstraction, not a validated fab model. See the assumptions above.
-- The OHT loop has no blocking, so vehicles can overlap on the track.
-- Live mode drives equipment states, alarms and lot events only. FOUP motion and KPIs need the simulator's snapshot.
-- Touch is supported on the 2D map. The 3D scene is built for mouse and trackpad, and is off by default on phones.
-- Dark theme only (see DESIGN.md for why).
+- Live mode derives KPIs, WIP and SPC from the events it receives, so they cover only what the feed reports. The OHT vehicles in live mode are synthesised: the stream has no vehicle positions, and the drawn vehicles do not block each other.
+- Nothing has been run against a physical tool, a PLC or a vendor's SECS/GEM, OPC UA or Sparkplug product. The SECS/GEM and OPC UA runs used simulators written for this project; see the tiers above.
+- The MES API serves the simulation. It has no authentication and no writes.
+- The 3D scene is off by default on phones, where a 2D map with 44 px targets takes its place. The 3D floor is keyboard accessible, but dragging the camera still needs a pointer.
+- There is no light theme: the console is a dark control-room interface and the 3D scene is lit for a dark ground. DESIGN.md has the reason.
+- No Docker compose file exists. Every source runs as native processes.
 
 ## License
 
