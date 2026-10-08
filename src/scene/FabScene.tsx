@@ -7,7 +7,7 @@ import { CameraControls, Html } from "@react-three/drei";
 import * as THREE from "three";
 import { useFab, simNow } from "@/store/useFab";
 import { loopPos } from "@/sim/config";
-import { vehicleS } from "@/sim/motion";
+import { foupPhase, vehicleS } from "@/sim/motion";
 import { E10_COLOR } from "@/art/StatusGlyph";
 import { buildLayout, BAY_FLOOR, PORT_Y, TRACK_Y } from "./layout3d";
 import type { SceneLayout } from "./layout3d";
@@ -289,22 +289,21 @@ function Movers({ layout }: { layout: SceneLayout }) {
       const s = vehicleS(v, t);
       const pos = loopPos(s);
       setPart(veh, i, pos.x, TRACK_Y + 0.05, pos.z, 1.5, 0.7, 2.4, Math.atan2(pos.dx, pos.dz));
-      if (v.jobLotId && v.plan.length === 4) {
+      if (v.jobLotId) {
         const idx = idxOf.current.get(v.jobLotId);
         if (idx === undefined) return;
         const lot = snap.lots.find((l) => l.id === v.jobLotId);
         const hang: [number, number, number] = [pos.x, TRACK_Y - 1.5, pos.z];
+        const fp = foupPhase(v, t);
         let p: [number, number, number] | null = null;
-        if (t >= v.plan[1].t0 && t < v.plan[1].t1) {
+        if (fp.phase === "lift") {
           const a = base.current.get(v.jobLotId);
-          const k = (t - v.plan[1].t0) / Math.max(v.plan[1].t1 - v.plan[1].t0, 1e-6);
-          if (a) p = [a[0] + (hang[0] - a[0]) * k, a[1] + (hang[1] - a[1]) * k, a[2] + (hang[2] - a[2]) * k];
-        } else if (t >= v.plan[2].t0 && t < v.plan[2].t1) {
+          if (a) p = [a[0] + (hang[0] - a[0]) * fp.k, a[1] + (hang[1] - a[1]) * fp.k, a[2] + (hang[2] - a[2]) * fp.k];
+        } else if (fp.phase === "carry") {
           p = hang;
-        } else if (t >= v.plan[3].t0 && v.jobTo) {
+        } else if (fp.phase === "lower" && v.jobTo) {
           const b = dest(v.jobTo);
-          const k = Math.min(1, (t - v.plan[3].t0) / Math.max(v.plan[3].t1 - v.plan[3].t0, 1e-6));
-          p = [hang[0] + (b[0] - hang[0]) * k, hang[1] + (b[1] - hang[1]) * k, hang[2] + (b[2] - hang[2]) * k];
+          p = [hang[0] + (b[0] - hang[0]) * fp.k, hang[1] + (b[1] - hang[1]) * fp.k, hang[2] + (b[2] - hang[2]) * fp.k];
         }
         if (p && lot) {
           const sc = lot.prio === 1 ? 1.45 : lot.hot ? 1.3 : 1.15;

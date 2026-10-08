@@ -162,6 +162,8 @@ export interface VehicleSeg {
   s1: number;
 }
 
+export type VehiclePhase = "idle" | "toPick" | "lift" | "toDrop" | "lower";
+
 export interface VehicleView {
   id: string;
   s: number;
@@ -169,7 +171,26 @@ export interface VehicleView {
   /** Lot of the job in progress, set from assignment until the drop. */
   jobLotId: string | null;
   jobTo: { k: "tool" | "stocker"; id: string } | null;
+  phase: VehiclePhase;
+  /** Dwell at the pickup port: the FOUP rises into the vehicle. Null until the vehicle has arrived. */
+  liftT0: number | null;
+  liftT1: number | null;
+  /** Dwell at the drop port: the FOUP is lowered. Null until the vehicle has arrived. */
+  lowerT0: number | null;
+  lowerT1: number | null;
+  /** True while the vehicle waits for a cell held by another vehicle. */
+  blocked: boolean;
+  /** When the vehicle takes its first cell on the track for the current job, or null when idle. */
+  entryT: number | null;
   plan: VehicleSeg[];
+}
+
+export interface OhtStats {
+  cells: number;
+  /** Vehicle-seconds spent stopped behind another vehicle, whole shift. */
+  waitS: number;
+  blockedNow: number;
+  jobsQueued: number;
 }
 
 export interface BayView {
@@ -245,6 +266,7 @@ export interface Snapshot {
   tools: ToolView[];
   lots: LotView[];
   vehicles: VehicleView[];
+  oht: OhtStats;
   bays: BayView[];
   wip: WipRow[];
   spc: SpcSeries[];

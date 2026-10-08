@@ -5,6 +5,8 @@ import type { RankInput } from "./dispatch";
 import { canTransition, emptyStateTime } from "./e10";
 import { erand, nrand, urand, wrand } from "./rng";
 import { routeRawS, weibullScaleForMean } from "./config";
+import { OhtTrack } from "./oht";
+import type { TrackVehicle } from "./oht";
 import { evaluateRules } from "./spc";
 import { scoreOf } from "./score";
 import type {
@@ -26,7 +28,7 @@ import type {
   SpcSeries,
   ToolDef,
   ToolView,
-  VehicleSeg,
+  VehiclePhase,
   VehicleView,
   WipRow,
 } from "./types";
@@ -145,12 +147,16 @@ interface Tool {
 
 interface Vehicle {
   id: string;
-  s: number;
   jobId: number | null;
   lotId: string | null;
   jobLot: string | null;
   jobTo: Ref | null;
-  plan: VehicleSeg[];
+  phase: VehiclePhase;
+  liftT0: number | null;
+  liftT1: number | null;
+  lowerT0: number | null;
+  lowerT1: number | null;
+  tv: TrackVehicle;
 }
 
 interface Job {
@@ -198,6 +204,7 @@ export class FabEngine {
   private lots = new Map<string, Lot>();
   private stockers = new Map<string, Set<string>>();
   private vehicles: Vehicle[] = [];
+  private track: OhtTrack;
   private jobs: Job[] = [];
   private jobSeq = 0;
   private rules = new Map<BayId, DispatchRule>();
@@ -271,16 +278,12 @@ export class FabEngine {
       const ts = this.toolsByBay.get(b.id)!;
       this.bayCenterS.set(b.id, ts.reduce((a, t) => a + t.def.loopS, 0) / Math.max(ts.length, 1));
     }
+    this.track = new OhtTrack(cfg.loopLength, cfg.vehicleSpeed, (tv, t) => this.onTrackArrive(tv, t));
     for (let i = 0; i < cfg.vehicleCount; i++) {
-      this.vehicles.push({
-        id: `OHT-${String(i + 1).padStart(2, "0")}`,
-        s: (i * cfg.loopLength) / cfg.vehicleCount,
-        jobId: null,
-        lotId: null,
-        jobLot: null,
-        jobTo: null,
-        plan: [],
-      });
+      const tv: TrackVehicle = { id: `OHT-${String(i + 1).padStart(2, "0")}`, s: 0, posT: 0, cell: 0, holding: false, entryT: null, cellsLeft: 0, plan: [], blockedOn: null, blockedSince: 0, waitS: 0 };
+      this.track.place(tv, (i * cfg.loopLength) / cfg.vehicleCount, 0);
+      this.track.register(tv);
+      this.vehicles.push({ id: tv.id, jobId: null, lotId: null, jobLot: null, jobTo: null, phase: "idle", liftT0: null, liftT1: null, lowerT0: null, lowerT1: null, tv });
     }
     this.bootstrap();
   }
@@ -442,6 +445,8 @@ export class FabEngine {
         return this.onQtWarn(e.id!, e.n!);
       case "qtExpire":
         return this.onQtExpire(e.id!, e.n!);
+      case "vehArrive":
+        return this.onVehArrive(e.id!);
       case "vehPick":
         return this.onVehPick(e.id!);
       case "vehDrop":
@@ -619,8 +624,7 @@ export class FabEngine {
   }
 
   private assignVehicles() {
-    const L = this.cfg.loopLength;
-    const fwd = (a: number, b: number) => (((b - a) % L) + L) % L;
+    const track = this.track;
     while (this.jobs.length) {
       const idle = this.vehicles.filter((v) => v.jobId === null);
       if (!idle.length) return;
@@ -633,39 +637,24 @@ export class FabEngine {
         if (pa > pb || (pa === pb && a.createdAt < b.createdAt)) bi = i;
       }
       const job = this.jobs.splice(bi, 1)[0];
-      const fromS = this.refS(job.from);
-      const toS = this.refS(job.to);
+      const fromCell = track.cellOf(this.refS(job.from));
       let v = idle[0];
       let bd = Infinity;
       for (const c of idle) {
-        const d = fwd(c.s, fromS);
+        const d = track.fwdCells(c.tv.cell, fromCell);
         if (d < bd) {
           bd = d;
           v = c;
         }
       }
-      const sp = this.cfg.vehicleSpeed;
-      const dw = this.cfg.vehicleDwellS;
-      const dCarry = fwd(fromS, toS);
-      const t0 = this.now;
-      const tArr = t0 + bd / sp;
-      const tPick = tArr + dw;
-      const tDrop = tPick + dCarry / sp;
-      const tDone = tDrop + dw;
-      const s0 = v.s;
-      v.plan = [
-        { t0, t1: tArr, s0, s1: s0 + bd },
-        { t0: tArr, t1: tPick, s0: s0 + bd, s1: s0 + bd },
-        { t0: tPick, t1: tDrop, s0: s0 + bd, s1: s0 + bd + dCarry },
-        { t0: tDrop, t1: tDone, s0: s0 + bd + dCarry, s1: s0 + bd + dCarry },
-      ];
       v.jobId = job.id;
       v.jobLot = job.lotId;
       v.jobTo = job.to;
+      v.phase = "toPick";
+      v.liftT0 = v.liftT1 = v.lowerT0 = v.lowerT1 = null;
       this.activeJobs.set(job.id, job);
-      v.s = (s0 + bd + dCarry) % L;
-      this.push({ type: "vehPick", t: tPick, id: v.id });
-      this.push({ type: "vehDrop", t: tDone, id: v.id });
+      v.tv.plan = [];
+      track.start(v.tv, bd, this.now);
     }
   }
 
@@ -678,6 +667,29 @@ export class FabEngine {
 
   private activeJobs = new Map<number, Job>();
 
+  /** The track has planned a vehicle all the way to the end of its current run. */
+  private onTrackArrive(tv: TrackVehicle, t: number) {
+    const v = this.vehicles.find((x) => x.id === tv.id)!;
+    this.push({ type: "vehArrive", t, id: v.id });
+  }
+
+  private onVehArrive(vehId: string) {
+    const v = this.vehicles.find((x) => x.id === vehId)!;
+    const dw = this.cfg.vehicleDwellS;
+    const t0 = this.now;
+    if (v.phase === "toPick") {
+      v.phase = "lift";
+      v.liftT0 = t0;
+      v.liftT1 = this.track.dwell(v.tv, t0, dw);
+      this.push({ type: "vehPick", t: v.liftT1, id: v.id });
+    } else if (v.phase === "toDrop") {
+      v.phase = "lower";
+      v.lowerT0 = t0;
+      v.lowerT1 = this.track.dwell(v.tv, t0, dw);
+      this.push({ type: "vehDrop", t: v.lowerT1, id: v.id });
+    }
+  }
+
   private onVehPick(vehId: string) {
     const v = this.vehicles.find((x) => x.id === vehId)!;
     const job = this.activeJobs.get(v.jobId!)!;
@@ -685,6 +697,9 @@ export class FabEngine {
     if (job.from.k === "stocker") this.stockers.get(job.from.id)!.delete(lot.id);
     lot.loc = { k: "vehicle", id: v.id };
     v.lotId = lot.id;
+    v.phase = "toDrop";
+    const cells = this.track.fwdCells(this.track.cellOf(this.refS(job.from)), this.track.cellOf(this.refS(job.to)));
+    this.track.start(v.tv, cells, this.now);
   }
 
   private onVehDrop(vehId: string) {
@@ -692,11 +707,14 @@ export class FabEngine {
     const job = this.activeJobs.get(v.jobId!)!;
     this.activeJobs.delete(job.id);
     const lot = this.lots.get(job.lotId)!;
+    this.track.park(v.tv, this.now);
     v.jobId = null;
     v.lotId = null;
     v.jobLot = null;
     v.jobTo = null;
-    v.plan = [];
+    v.phase = "idle";
+    v.liftT0 = v.liftT1 = v.lowerT0 = v.lowerT1 = null;
+    v.tv.plan = [];
     if (job.to.k === "stocker") {
       lot.loc = { k: "stocker", id: job.to.id };
       this.stockers.get(job.to.id)!.add(lot.id);
@@ -1369,7 +1387,22 @@ export class FabEngine {
       sigma: s.sigma,
       points: this.spcPoints.get(s.param) ?? [],
     }));
-    const vehicles: VehicleView[] = this.vehicles.map((v) => ({ id: v.id, s: v.s, lotId: v.lotId, jobLotId: v.jobLot, jobTo: v.jobTo, plan: v.plan }));
+    const vehicles: VehicleView[] = this.vehicles.map((v) => ({
+      id: v.id,
+      s: v.tv.s,
+      lotId: v.lotId,
+      jobLotId: v.jobLot,
+      jobTo: v.jobTo,
+      phase: v.phase,
+      liftT0: v.liftT0,
+      liftT1: v.liftT1,
+      lowerT0: v.lowerT0,
+      lowerT1: v.lowerT1,
+      blocked: v.tv.blockedOn !== null,
+      entryT: v.tv.entryT,
+      plan: v.tv.plan,
+    }));
+    const oht = { cells: this.track.cells, waitS: this.vehicles.reduce((a, v) => a + v.tv.waitS, 0), blockedNow: this.vehicles.filter((v) => v.tv.blockedOn !== null).length, jobsQueued: this.jobs.length };
     return {
       t: this.now,
       shiftS: this.cfg.shiftS,
@@ -1378,6 +1411,7 @@ export class FabEngine {
       tools,
       lots,
       vehicles,
+      oht,
       bays,
       wip: [...wipMap.values()],
       spc,
