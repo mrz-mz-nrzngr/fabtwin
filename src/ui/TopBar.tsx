@@ -73,11 +73,11 @@ export function TopBar({ onLive, onReport, onBrief }: { onLive: () => void; onRe
           <button
             key={v}
             type="button"
-            aria-pressed={speed === v}
+            aria-pressed={mode !== "live" && speed === v}
             disabled={mode === "live" || phase === "ended"}
             onClick={() => setSpeed(v)}
             className={`num min-h-8 min-w-12 border border-line px-2.5 text-[12px] first:rounded-l-xs last:rounded-r-xs -ml-px first:ml-0 ${
-              speed === v ? "border-accent bg-accent text-accent-ink font-medium relative z-10" : "bg-raised text-ink hover:border-steel"
+              mode !== "live" && speed === v ? "border-accent bg-accent text-accent-ink font-medium relative z-10" : "bg-raised text-ink hover:border-steel"
             } disabled:text-muted`}
           >
             {label}

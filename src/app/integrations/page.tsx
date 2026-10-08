@@ -32,13 +32,15 @@ function Row({ it }: { it: Integration }) {
   return (
     <li className="border-b border-line">
       <details className="group" open={it.id === "gem"}>
-        <summary className="flex cursor-pointer list-none flex-wrap items-baseline gap-x-4 gap-y-1 px-1 py-3 hover:bg-panel">
-          <span className="min-w-[14ch] text-[15px] font-medium text-ink">{it.name}</span>
+        <summary className="grid cursor-pointer list-none items-baseline gap-x-4 gap-y-1 px-1 py-3 hover:bg-panel md:grid-cols-[250px_120px_1fr_auto]">
+          <span className="text-[15px] font-medium text-ink">{it.name}</span>
           <TierMark tier={it.tier} />
-          <span className="basis-full text-[12px] text-muted md:basis-auto md:flex-1">{it.protocol}</span>
+          <span className="text-[12px] text-muted">{it.protocol}</span>
+          <span className="text-[12px] text-steel underline group-open:hidden">Show setup</span>
+          <span className="hidden text-[12px] text-steel underline group-open:inline">Hide setup</span>
         </summary>
-        <div className="grid gap-x-8 gap-y-3 px-1 pb-5 pt-1 md:grid-cols-[1.1fr_1fr]">
-          <div className="flex flex-col gap-2">
+        <div className="grid grid-cols-1 gap-x-8 gap-y-3 px-1 pb-5 pt-1 md:grid-cols-[1.1fr_1fr]">
+          <div className="flex min-w-0 flex-col gap-2">
             <p className="max-w-[62ch] text-[13px] leading-relaxed text-ink">{it.summary}</p>
             <p className="max-w-[62ch] text-[12px] leading-relaxed text-muted">
               <span className="font-medium text-ink">What the tier covers. </span>
@@ -61,7 +63,7 @@ function Row({ it }: { it: Integration }) {
               </ul>
             )}
           </div>
-          <div>
+          <div className="min-w-0">
             <h3 className="mb-1.5 text-[12px] font-medium text-muted">Setup</h3>
             <ol className="flex list-decimal flex-col gap-2 pl-4 text-[13px] marker:text-muted">
               {it.steps.map((s, i) => (
@@ -99,7 +101,7 @@ export default function IntegrationsPage() {
           The simulator needs nothing. Live mode follows real traffic from SECS/GEM equipment, Sparkplug B or OPC UA. The API and exports hand the state of the fab to other systems. Each line carries the tier it has earned, and no line claims more than its run proves. All numbers in the console are simulated unless a live feed is connected.
         </p>
 
-        <section aria-labelledby="tiers" className="mt-8 grid gap-6 border-y border-line py-5 md:grid-cols-[200px_1fr]">
+        <section aria-labelledby="tiers" className="mt-8 grid grid-cols-1 gap-6 border-y border-line py-5 md:grid-cols-[200px_1fr]">
           <h2 id="tiers" className="text-[13px] font-medium text-muted">
             What the tiers mean
           </h2>
