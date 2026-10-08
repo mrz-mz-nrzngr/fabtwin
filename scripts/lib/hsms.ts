@@ -176,7 +176,8 @@ export class HsmsHost {
 
   private header(stream: number, func: number, w: boolean, stype: number, sys: number): Buffer {
     const h = Buffer.alloc(10);
-    h.writeUInt16BE(this.sessionId, 0);
+    // Control messages (Select, Linktest) carry 0xFFFF as their session id, as secsgem sends them; data messages carry the device id.
+    h.writeUInt16BE(stype === 0 ? this.sessionId : 0xffff, 0);
     h[2] = (w ? 0x80 : 0) | stream;
     h[3] = func;
     h[4] = 0;
