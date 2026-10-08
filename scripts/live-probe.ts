@@ -22,6 +22,7 @@ const handlers: SourceHandlers = {
   onEvents: (events: FabEvent[]) => {
     twin.apply(events);
     for (const e of events) {
+      if (e.type === "alarm.set" || e.type === "alarm.cleared") console.log(`  ${e.type} ${e.data.code} on ${String(e.data.toolId)}${e.type === "alarm.set" ? ` (${e.data.severity})` : ""}`);
       counts[e.type] = (counts[e.type] ?? 0) + 1;
       if (seen.length < 400 && (e.type !== "collection_event" || e.data.ceid !== 1010)) {
         const d = e.data as unknown as Record<string, unknown>;

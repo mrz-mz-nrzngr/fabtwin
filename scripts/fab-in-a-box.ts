@@ -20,7 +20,8 @@ import type { ChildProcess } from "node:child_process";
 import { mkdirSync, writeFileSync, existsSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import WebSocket, { WebSocketServer } from "ws";
+import WebSocket from "ws";
+import { EventHub } from "./lib/hub";
 import { CEID, SCHEMA_VERSION } from "../src/events/types";
 import type { FabEvent } from "../src/events/types";
 import { A, HsmsHost } from "./lib/hsms";
@@ -71,31 +72,9 @@ process.on("SIGINT", () => shutdown(0));
 process.on("SIGTERM", () => shutdown(0));
 
 // ---------------------------------------------------------------- hub WebSocket (what FabTwin connects to)
-const hub = new WebSocketServer({ port: HUB_PORT });
-const latestState = new Map<string, FabEvent>();
-const activeStart = new Map<string, FabEvent>();
-const activeAlarm = new Map<string, FabEvent>();
+const hub = new EventHub(HUB_PORT, (n) => say(`FabTwin connected to the hub (${n} client${n === 1 ? "" : "s"})`));
 let mesSeq = 0;
-let forwarded = 0;
-
-function publish(events: FabEvent[]) {
-  for (const e of events) {
-    forwarded++;
-    const d = e.data as unknown as { toolId?: string; alarmId?: string };
-    if (e.type === "equipment.state_changed" && d.toolId) latestState.set(d.toolId, e);
-    if (e.type === "lot.started" && d.toolId) activeStart.set(d.toolId, e);
-    if (e.type === "lot.completed" && d.toolId) activeStart.delete(d.toolId);
-    if (e.type === "alarm.set" && d.alarmId) activeAlarm.set(d.alarmId, e);
-    if (e.type === "alarm.cleared" && d.alarmId) activeAlarm.delete(d.alarmId);
-  }
-  const frame = JSON.stringify({ events });
-  for (const c of hub.clients) if (c.readyState === 1) c.send(frame);
-}
-hub.on("connection", (ws) => {
-  const hello = [...latestState.values(), ...activeStart.values(), ...activeAlarm.values()];
-  if (hello.length) ws.send(JSON.stringify({ events: hello }));
-  say(`FabTwin connected to the hub (${hub.clients.size} client${hub.clients.size === 1 ? "" : "s"})`);
-});
+const publish = (events: FabEvent[]) => hub.publish(events);
 
 const mes = (type: FabEvent["type"], data: object): FabEvent => ({ v: SCHEMA_VERSION, seq: ++mesSeq, t: Date.now(), source: "fab-in-a-box-mes", type, data }) as FabEvent;
 
@@ -229,7 +208,7 @@ async function main() {
   say(`MES flow running. FabTwin live mode: ws://localhost:${HUB_PORT}`);
   const started = Date.now();
   const ticker = setInterval(() => {
-    say(`wip ${fab.wip}, shipped ${shippedCount}, ${forwarded} events forwarded to ${hub.clients.size} client(s)`);
+    say(`wip ${fab.wip}, shipped ${shippedCount}, ${hub.forwarded} events forwarded to ${hub.clients} client(s)`);
     if (DURATION && (Date.now() - started) / 1000 >= DURATION) {
       clearInterval(ticker);
       say("duration reached, stopping");

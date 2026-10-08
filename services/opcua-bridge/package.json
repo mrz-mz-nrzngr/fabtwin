@@ -1,0 +1,17 @@
+{
+  "name": "fabtwin-opcua-bridge",
+  "version": "0.1.0",
+  "private": true,
+  "description": "OPC UA to FabTwin event bridge: subscribes to OPC UA nodes and serves FabTwin schema v1 events over WebSocket.",
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "bridge": "tsx src/bridge.ts",
+    "sample-server": "tsx src/sample-server.ts"
+  },
+  "dependencies": {
+    "node-opcua": "^2.170.0",
+    "tsx": "^4.23.15",
+    "ws": "^8.22.0"
+  }
+}

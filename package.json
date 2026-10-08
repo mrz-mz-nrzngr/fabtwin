@@ -16,7 +16,9 @@
     "mock-live": "tsx scripts/mock-live-server.ts",
     "sparkplug-sim": "tsx scripts/sparkplug-edge-sim.ts",
     "fab-in-a-box": "bash scripts/fab-in-a-box.sh",
-    "live-probe": "tsx scripts/live-probe.ts"
+    "live-probe": "tsx scripts/live-probe.ts",
+    "opcua-sample-server": "npm --prefix services/opcua-bridge run sample-server",
+    "opcua-bridge": "npm --prefix services/opcua-bridge run bridge"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.9",

@@ -1,8 +1,8 @@
 import type { FabEvent } from "../../events/types";
-import { SPC_SPECS } from "../../sim/config";
-import { ToolAdapter, normaliseState } from "../adapter";
-import type { Observation } from "../adapter";
-import { DataType, decodePayload } from "./proto";
+import { ToolAdapter } from "../adapter";
+import { applyNamedValues } from "../named";
+import type { NamedValue } from "../named";
+import { decodePayload } from "./proto";
 import type { Metric, Payload } from "./proto";
 import { parseTopic } from "./topic";
 
@@ -180,10 +180,7 @@ export class SparkplugMapper {
   }
 
   private metrics(toolId: string, list: Metric[], p: Payload, t: number, node?: NodeMem, aliasKey?: string): FabEvent[] {
-    const obs: Observation = { t };
-    let touched = false;
-    const events: FabEvent[] = [];
-    const alarms: Array<Parameters<ToolAdapter["alarm"]>[1]> = [];
+    const named: NamedValue[] = [];
     for (const m of list) {
       let name = m.name;
       if (!name && m.alias !== undefined && node) name = node.aliases.get(aliasKey ?? "")?.get(m.alias);
@@ -196,44 +193,12 @@ export class SparkplugMapper {
         }
         continue;
       }
-      const mt = m.timestamp ?? p.timestamp ?? t;
-      if (name === "State") {
-        const s = normaliseState(m.value);
-        if (s) {
-          obs.state = s;
-          obs.t = mt;
-          touched = true;
-        } else this.stats.ignoredMetrics++;
-      } else if (name === "LotId") {
-        obs.lotId = typeof m.value === "string" ? m.value : null;
-        touched = true;
-      } else if (name === "Route") {
-        obs.route = typeof m.value === "string" ? m.value : null;
-        touched = true;
-      } else if (name === "StepIndex") {
-        obs.stepIndex = typeof m.value === "number" ? m.value : null;
-        touched = true;
-      } else if (name === "Recipe") {
-        obs.recipe = typeof m.value === "string" ? m.value : null;
-        touched = true;
-      } else if (name.startsWith("Alarm/")) {
-        const parts = name.split("/");
-        const sev = parts.length === 3 && ["info", "warning", "critical"].includes(parts[1]) ? (parts[1] as "info" | "warning" | "critical") : "warning";
-        const code = parts[parts.length - 1];
-        if (typeof m.value === "boolean" && code) alarms.push({ t: mt, code, active: m.value, severity: sev, text: `${code} on ${toolId} (Sparkplug metric ${name})` });
-        else this.stats.ignoredMetrics++;
-      } else if (name.startsWith("Measurement/")) {
-        const param = name.slice("Measurement/".length);
-        const spec = SPC_SPECS.find((s) => s.param === param);
-        if (spec && typeof m.value === "number" && (m.datatype === DataType.Float || m.datatype === DataType.Double || m.datatype === DataType.Unknown)) events.push(...this.adapter.measure(toolId, { t: mt, param, value: m.value, unit: spec.unit }));
-        else this.stats.ignoredMetrics++;
-      } else if (name !== "bdSeq" && !name.startsWith("Node Control/") && !name.startsWith("Device Control/")) {
-        this.stats.ignoredMetrics++;
-      }
+      if (name === "bdSeq" || name.startsWith("Node Control/") || name.startsWith("Device Control/")) continue;
+      named.push({ name, value: m.value, t: m.timestamp ?? p.timestamp ?? t });
     }
-    for (const a of alarms) events.push(...this.adapter.alarm(toolId, a));
-    if (touched) events.push(...this.adapter.observe(toolId, obs));
-    return events;
+    const r = applyNamedValues(this.adapter, toolId, named, t);
+    this.stats.ignoredMetrics += r.ignored.length;
+    return r.events;
   }
 }
 
