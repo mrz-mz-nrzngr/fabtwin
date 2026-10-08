@@ -106,8 +106,8 @@ export function Attention({ compact = false }: { compact?: boolean }) {
       </Section>
 
       <Section title="Bays and dispatch rules" aside={mode === "sim" ? <span className="num text-[11px] text-muted">crew {snap.crew.busy}/{snap.crew.total}</span> : undefined}>
-        {mode === "live" && <p className="text-[12px] text-muted">Dispatch rules and bay metrics belong to the simulator. They are off while the console follows a live socket.</p>}
-        <ul className={mode === "live" ? "hidden" : "flex flex-col gap-1.5"}>
+        {mode === "live" && <p className="mb-1.5 text-[12px] text-muted">Bay metrics are derived from the feed. Dispatch rules belong to the simulator and stay read-only while live.</p>}
+        <ul className="flex flex-col gap-1.5">
           {snap.bays.map((b) => (
             <li key={b.id} className="rounded-xs border border-line bg-panel p-1.5">
               <div className="flex items-center justify-between gap-2">
@@ -134,7 +134,7 @@ export function Attention({ compact = false }: { compact?: boolean }) {
                   ))}
                 </select>
               </label>
-              <p className="mt-1 text-[11px] leading-snug text-muted">{RULE_HINT[b.rule]}</p>
+              {mode === "sim" && <p className="mt-1 text-[11px] leading-snug text-muted">{RULE_HINT[b.rule]}</p>}
               {compact && (
                 <ul className="mt-1.5 flex flex-wrap gap-1">
                   {snap.tools

@@ -21,23 +21,24 @@ export function ShiftSummary() {
   const k = snap.kpi;
   return (
     <div className="flex min-h-0 flex-col">
-      <Section title="Shift KPIs, simulated" aside={<span className="text-[11px] text-muted">not real fab data</span>}>
-        {mode === "live" ? (
-          <p className="text-[12px] text-muted">Live mode shows equipment states, alarms and lot events from the socket. KPIs are computed by the simulator, so they are off while live.</p>
-        ) : (
-          <dl>
-            <Stat label="Lots shipped" value={`${k.shipped}`} hint="Lots that finished their last step this shift" />
-            <Stat label="Throughput" value={`${k.throughputPerHr.toFixed(1)} lots/h`} />
-            <Stat label="WIP" value={`${k.wip} lots`} hint="Lots in the fab right now. Release stops at the WIP cap." />
-            <Stat label="Cycle time, mean" value={k.avgCtS === null ? "none shipped" : fmtDur(k.avgCtS)} />
-            <Stat label="X-factor" value={k.xFactor === null ? "-" : k.xFactor.toFixed(2)} hint="Cycle time divided by raw process time. 1.0 would mean no waiting at all." />
-            <Stat label="On-time delivery" value={k.otd === null ? "-" : pct(k.otd)} />
-            <Stat label="Queue-time violations" value={`${k.qtViolations}`} />
-            <Stat label="Quality escapes" value={`${k.oocEscapes}`} hint="Lots with an SPC excursion flag that shipped" />
-            <Stat label="Mean tool utilization" value={pct(k.avgUtil)} hint="Productive time divided by total time, all 24 tools" />
-            <Stat label="Unscheduled downtime" value={fmtDur(k.downtimeS)} hint="Summed over all tools" />
-          </dl>
-        )}
+      <Section
+        title={mode === "live" ? "KPIs, derived from live events" : "Shift KPIs, simulated"}
+        aside={<span className="text-[11px] text-muted">{mode === "live" ? "computed here from lot events" : "not real fab data"}</span>}
+      >
+        {mode === "live" && k.shipped === 0 && snap.lots.length === 0 && <p className="mb-1 text-[12px] text-muted">No lot events yet. KPIs fill in as lots start, complete and ship on the feed.</p>}
+        <dl>
+          <Stat label="Lots shipped" value={`${k.shipped}`} hint={mode === "live" ? "Lots whose last step completed (final flag, or the last step of a known route)" : "Lots that finished their last step this shift"} />
+          <Stat label="Throughput" value={`${k.throughputPerHr.toFixed(1)} lots/h`} />
+          <Stat label="WIP" value={`${k.wip} lots`} hint={mode === "live" ? "Lots seen on the feed that have not shipped" : "Lots in the fab right now. Release stops at the WIP cap."} />
+          <Stat label="Cycle time, mean" value={k.avgCtS === null ? "none shipped" : fmtDur(k.avgCtS)} />
+          <Stat label="X-factor" value={k.xFactor === null ? "-" : k.xFactor.toFixed(2)} hint="Cycle time divided by raw process time. 1.0 would mean no waiting at all." />
+          <Stat label="On-time delivery" value={k.otd === null ? "-" : pct(k.otd)} />
+          <Stat label="Queue-time violations" value={`${k.qtViolations}`} />
+          <Stat label="Quality escapes" value={`${k.oocEscapes}`} hint="Lots with an SPC excursion flag that shipped" />
+          <Stat label="Mean tool utilization" value={pct(k.avgUtil)} hint="Productive time divided by time observed, all 24 tools" />
+          <Stat label="Unscheduled downtime" value={fmtDur(k.downtimeS)} hint="Summed over all tools" />
+          {mode === "sim" && <Stat label="OHT waiting" value={fmtDur(snap.oht.waitS)} hint={`Vehicle-seconds stopped behind another vehicle. ${snap.oht.blockedNow} blocked now, ${snap.oht.jobsQueued} transport orders queued.`} />}
+        </dl>
       </Section>
       <div className="flex flex-col items-center gap-2 px-3 py-4 text-center">
         <ToolIso size={96} kind="litho" lamp="#3ecf8e" />

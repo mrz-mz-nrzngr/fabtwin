@@ -13,13 +13,18 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "calibrate": "tsx scripts/calibrate.ts",
-    "mock-live": "tsx scripts/mock-live-server.ts"
+    "mock-live": "tsx scripts/mock-live-server.ts",
+    "sparkplug-sim": "tsx scripts/sparkplug-edge-sim.ts",
+    "fab-in-a-box": "bash scripts/fab-in-a-box.sh",
+    "live-probe": "tsx scripts/live-probe.ts"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.9",
     "@react-three/fiber": "^9.8.1",
     "camera-controls": "^3.1.2",
+    "mqtt": "^5.16.0",
     "next": "^16.4.0",
+    "protobufjs": "^8.8.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "three": "^0.186.1",

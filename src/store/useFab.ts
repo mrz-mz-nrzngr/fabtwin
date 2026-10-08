@@ -3,8 +3,10 @@
 import { create } from "zustand";
 import { EPOCH_MS } from "@/sim/config";
 import type { FabEvent } from "@/events/types";
-import { LiveClient } from "@/events/live";
 import type { LiveState } from "@/events/live";
+import { LiveTwin } from "@/live/twin";
+import { createWsSource } from "@/live/sources";
+import type { LiveConfig, LiveSource } from "@/live/sources";
 import type { ShiftReport } from "@/sim/report";
 import type { BayId, Command, Snapshot } from "@/sim/types";
 import type { FromWorker, ToWorker } from "@/worker/protocol";
@@ -19,12 +21,21 @@ export interface Toast {
   ok: boolean;
 }
 
+export interface SourceStatus {
+  state: LiveState;
+  detail?: string;
+}
+
 interface LiveInfo {
+  kind: LiveConfig["kind"];
+  /** What the dialog shows: the URLs, comma separated. */
   url: string;
   state: LiveState | "off";
   detail?: string;
   received: number;
   rejected: number;
+  sources: Record<string, SourceStatus>;
+  ignoredTools: string[];
 }
 
 interface FabState {
@@ -53,19 +64,29 @@ interface FabState {
   focusBay: (bay: BayId | null) => void;
   setView: (v: "3d" | "2d") => void;
   newShift: (seed: number) => void;
-  openLive: (url: string) => void;
+  openLive: (config: LiveConfig) => void;
   closeLive: () => void;
   dismissToast: (id: number) => void;
 }
 
 let worker: Worker | null = null;
-let liveClient: LiveClient | null = null;
+let liveSources: LiveSource[] = [];
+let liveTwin: LiveTwin | null = null;
+let liveTimer: ReturnType<typeof setInterval> | null = null;
 let cmdSeq = 0;
 let toastSeq = 0;
 const pendingCmds = new Map<number, Command>();
 
 function post(m: ToWorker) {
   worker?.postMessage(m);
+}
+
+function stopLive() {
+  liveSources.forEach((x) => x.close());
+  liveSources = [];
+  liveTwin = null;
+  if (liveTimer) clearInterval(liveTimer);
+  liveTimer = null;
 }
 
 export const useFab = create<FabState>((set, get) => ({
@@ -84,7 +105,7 @@ export const useFab = create<FabState>((set, get) => ({
   focus: { bay: null, n: 0 },
   view: "3d",
   toasts: [],
-  live: { url: "ws://localhost:8787", state: "off", received: 0, rejected: 0 },
+  live: { kind: "ws", url: "ws://localhost:8787", state: "off", received: 0, rejected: 0, sources: {}, ignoredTools: [] },
 
   init: (seed) => {
     const s = seed ?? get().seed;
@@ -152,57 +173,68 @@ export const useFab = create<FabState>((set, get) => ({
     get().init(seed);
   },
 
-  openLive: (url) => {
-    liveClient?.close();
+  openLive: (config) => {
+    stopLive();
     post({ type: "speed", value: 0 });
-    const base = get().snap;
+    const twin = new LiveTwin();
+    liveTwin = twin;
     set({
       mode: "live",
       speed: 0,
       phase: "running",
       report: null,
       models: emptyModels(0),
-      snap: base ? { ...base, lots: [], vehicles: [], objectives: [], score: 0 } : base,
-      live: { url, state: "connecting", received: 0, rejected: 0 },
+      snap: twin.snapshot(),
+      snapRecvAt: performance.now(),
+      live: { kind: config.kind, url: config.urls.join(", "), state: "connecting", received: 0, rejected: 0, sources: {}, ignoredTools: [] },
     });
-    let firstT = 0;
-    liveClient = new LiveClient(url, {
-      onState: (state, detail) => set((st) => ({ live: { ...st.live, state, detail } })),
-      onRejected: (errs) => set((st) => ({ live: { ...st.live, rejected: st.live.rejected + errs.length, detail: errs[0] } })),
+    let baseSet = false;
+    const refresh = () => {
+      if (!liveTwin) return;
+      set({ snap: liveTwin.snapshot(), snapRecvAt: performance.now() });
+    };
+    const aggregate = (sources: Record<string, SourceStatus>): { state: LiveState; detail?: string } => {
+      const all = Object.values(sources);
+      if (all.some((x) => x.state === "open")) return { state: "open", detail: all.length > 1 ? `${all.filter((x) => x.state === "open").length} of ${all.length} sources open` : undefined };
+      const bad = all.find((x) => x.state === "error");
+      if (bad) return { state: "error", detail: bad.detail };
+      return { state: all[0]?.state ?? "connecting", detail: all[0]?.detail };
+    };
+    const handlers = {
+      onState: (id: string, state: LiveState, detail?: string) =>
+        set((st) => {
+          const sources = { ...st.live.sources, [id]: { state, detail } };
+          return { live: { ...st.live, sources, ...aggregate(sources) } };
+        }),
+      onRejected: (_id: string, errs: string[]) => set((st) => ({ live: { ...st.live, rejected: st.live.rejected + errs.length, detail: errs[0] } })),
       onEvents: (events: FabEvent[]) => {
-        const st = get();
-        if (!firstT) {
-          firstT = events[0].t;
-          set({ models: emptyModels(firstT) });
+        if (!liveTwin) return;
+        liveTwin.apply(events);
+        if (!baseSet) {
+          baseSet = true;
+          set({ models: emptyModels(liveTwin.baseMs) });
         }
         const models = applyEvents(get().models, events);
-        let snap = st.snap;
-        if (snap) {
-          const tools = snap.tools.map((t) => ({ ...t }));
-          for (const ev of events) {
-            if (ev.type === "equipment.state_changed") {
-              const tv = tools.find((t) => t.id === ev.data.toolId);
-              if (tv) {
-                tv.state = ev.data.to;
-                tv.reason = ev.data.reason ?? "";
-                tv.lotId = ev.data.lotId ?? null;
-                tv.recipe = ev.data.recipe ?? null;
-              }
-            }
-          }
-          const last = events[events.length - 1];
-          snap = { ...snap, tools, t: (last.t - firstT) / 1000 };
-        }
-        set((s) => ({ models, snap, snapRecvAt: performance.now(), live: { ...s.live, received: s.live.received + events.length } }));
+        set((s) => ({ models, snap: liveTwin!.snapshot(), snapRecvAt: performance.now(), live: { ...s.live, received: s.live.received + events.length, ignoredTools: liveTwin!.stats.ignoredTools } }));
       },
-    });
-    liveClient.connect();
+    };
+    liveTimer = setInterval(refresh, 250);
+    if (config.kind === "sparkplug") {
+      void import("@/integrations/sparkplug/source").then(({ createSparkplugSource }) => {
+        if (liveTwin !== twin) return;
+        const src = createSparkplugSource(config, handlers);
+        liveSources = [src];
+        src.connect();
+      });
+    } else {
+      liveSources = config.urls.map((u) => createWsSource(u, handlers));
+      liveSources.forEach((x) => x.connect());
+    }
   },
 
   closeLive: () => {
-    liveClient?.close();
-    liveClient = null;
-    if (get().mode === "live") set({ mode: "sim", live: { ...get().live, state: "off" } });
+    stopLive();
+    if (get().mode === "live") set({ mode: "sim", live: { ...get().live, state: "off", sources: {} } });
   },
 
   dismissToast: (id) => set((st) => ({ toasts: st.toasts.filter((t) => t.id !== id) })),
@@ -212,7 +244,7 @@ export const useFab = create<FabState>((set, get) => ({
 export function simNow(): number {
   const { snap, snapRecvAt, speed, mode } = useFab.getState();
   if (!snap) return 0;
-  if (mode === "live") return snap.t;
+  if (mode === "live") return snap.t + Math.min((performance.now() - snapRecvAt) / 1000, 1);
   const dt = speed > 0 ? Math.min((performance.now() - snapRecvAt) / 1000, 0.3) * speed : 0;
   return Math.min(snap.shiftS, snap.t + dt);
 }
