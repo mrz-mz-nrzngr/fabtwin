@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useFab } from "@/store/useFab";
 import type { Speed } from "@/store/useFab";
 import { Foup } from "@/art/Foup";
@@ -108,6 +109,9 @@ export function TopBar({ onLive, onReport, onBrief }: { onLive: () => void; onRe
             </button>
           ))}
         </div>
+        <Link href="/integrations" className="hidden min-h-7 items-center rounded-xs border border-line px-2.5 text-[12px] text-steel hover:text-ink md:inline-flex">
+          Integrations
+        </Link>
         <Btn onClick={onLive} className="hidden md:block">
           {mode === "live" ? "Live feed" : "Live mode"}
         </Btn>

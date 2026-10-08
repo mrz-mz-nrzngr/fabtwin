@@ -14,6 +14,11 @@ import { applyEvents, emptyModels } from "./readmodels";
 import type { ReadModels } from "./readmodels";
 
 export type Speed = 0 | 1 | 10 | 60;
+export type CamCmd =
+  | { k: "pan"; right: number; forward: number }
+  | { k: "zoom"; by: number }
+  | { k: "orbit"; az: number; pol: number }
+  | { k: "tool"; id: string };
 export type Selection = { kind: "tool" | "lot"; id: string } | null;
 export interface Toast {
   id: number;
@@ -53,6 +58,8 @@ interface FabState {
   report: ShiftReport | null;
   selection: Selection;
   focus: { bay: BayId | null; n: number };
+  /** One-shot camera command from the keyboard. n changes on every command so repeats are seen. */
+  cam: { n: number; cmd: CamCmd | null };
   view: "3d" | "2d";
   toasts: Toast[];
   live: LiveInfo;
@@ -62,6 +69,7 @@ interface FabState {
   send: (cmd: Command) => void;
   select: (s: Selection) => void;
   focusBay: (bay: BayId | null) => void;
+  camera: (cmd: CamCmd) => void;
   setView: (v: "3d" | "2d") => void;
   newShift: (seed: number) => void;
   openLive: (config: LiveConfig) => void;
@@ -103,6 +111,7 @@ export const useFab = create<FabState>((set, get) => ({
   report: null,
   selection: null,
   focus: { bay: null, n: 0 },
+  cam: { n: 0, cmd: null },
   view: "3d",
   toasts: [],
   live: { kind: "ws", url: "ws://localhost:8787", state: "off", received: 0, rejected: 0, sources: {}, ignoredTools: [] },
@@ -166,6 +175,7 @@ export const useFab = create<FabState>((set, get) => ({
 
   select: (selection) => set({ selection }),
   focusBay: (bay) => set((st) => ({ focus: { bay, n: st.focus.n + 1 } })),
+  camera: (cmd) => set((st) => ({ cam: { n: st.cam.n + 1, cmd } })),
   setView: (view) => set({ view }),
 
   newShift: (seed) => {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import type { KeyboardEvent, ReactNode } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import type { ThreeEvent } from "@react-three/fiber";
 import { CameraControls, Html } from "@react-three/drei";
@@ -12,7 +13,11 @@ import { E10_COLOR } from "@/art/StatusGlyph";
 import { buildLayout, BAY_FLOOR, PORT_Y, TRACK_Y } from "./layout3d";
 import type { SceneLayout } from "./layout3d";
 import { BAY_NAME } from "@/ui/format";
-import type { LotView } from "@/sim/types";
+import { E10_LABEL } from "@/sim/e10";
+import { Btn } from "@/ui/kit";
+import { cycleTool, nextTool } from "./nav";
+import type { Dir } from "./nav";
+import type { BayId, LotView } from "@/sim/types";
 
 const MAX_FOUPS = 200;
 const tmp = new THREE.Object3D();
@@ -380,9 +385,24 @@ function Rig({ layout }: { layout: SceneLayout }) {
   const controls = useRef<CameraControls>(null);
   const camera = useThree((s) => s.camera);
   const focus = useFab((s) => s.focus);
+  const cam = useFab((s) => s.cam);
   useEffect(() => {
     useThreeCamera.current = camera;
   }, [camera]);
+  useEffect(() => {
+    const c = controls.current;
+    const cmd = cam.cmd;
+    if (!c || !cmd) return;
+    if (cmd.k === "pan") {
+      void c.truck(cmd.right, 0, true);
+      void c.forward(cmd.forward, true);
+    } else if (cmd.k === "zoom") void c.dolly(cmd.by, true);
+    else if (cmd.k === "orbit") void c.rotate(cmd.az, cmd.pol, true);
+    else {
+      const tl = layout.tools.find((t) => t.id === cmd.id);
+      if (tl) void c.setLookAt(tl.x, 16, tl.z + (tl.z < 0 ? 15 : -15), tl.x, 1.5, tl.z, true);
+    }
+  }, [cam, layout]);
   useEffect(() => {
     const c = controls.current;
     if (!c) return;
@@ -413,11 +433,107 @@ function Fps({ onFps }: { onFps: (n: number) => void }) {
   return null;
 }
 
+const BAY_KEYS: BayId[] = ["LITHO", "ETCH", "DEP", "CMP", "METRO"];
+
+const HELP: Array<[string, string]> = [
+  ["Arrow keys", "select the next tool in that direction"],
+  ["N and P", "next and previous tool in reading order"],
+  ["Enter", "fly the camera to the selected tool"],
+  ["Shift and arrow keys", "pan the camera"],
+  ["Plus and minus", "zoom in and out"],
+  ["[ and ]", "orbit left and right"],
+  ["0", "overview"],
+  ["1 to 5", "focus a bay: litho, etch, deposition, CMP, metrology"],
+  ["Escape", "clear the selection"],
+];
+
+function FloorKeys({ layout, children }: { layout: SceneLayout; children: ReactNode }) {
+  const select = useFab((s) => s.select);
+  const selection = useFab((s) => s.selection);
+  const focusBay = useFab((s) => s.focusBay);
+  const camera = useFab((s) => s.camera);
+  const snap = useFab((s) => s.snap);
+  const [help, setHelp] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const navTools = useMemo(() => layout.tools.map((t) => ({ id: t.id, x: t.x, z: t.z })), [layout]);
+  const selTool = selection?.kind === "tool" ? selection.id : null;
+  const tv = selTool ? snap?.tools.find((t) => t.id === selTool) : undefined;
+  const say = tv ? `${tv.id} selected. ${E10_LABEL[tv.state]}${tv.lotId ? `, running lot ${tv.lotId}` : ""}.` : "";
+
+  const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+    if (e.target !== e.currentTarget || e.ctrlKey || e.metaKey || e.altKey) return;
+    const arrows: Record<string, Dir> = { ArrowLeft: "left", ArrowRight: "right", ArrowUp: "up", ArrowDown: "down" };
+    const k = e.key;
+    let handled = true;
+    if (k in arrows) {
+      if (e.shiftKey) {
+        const d = arrows[k];
+        camera({ k: "pan", right: d === "left" ? -6 : d === "right" ? 6 : 0, forward: d === "up" ? 6 : d === "down" ? -6 : 0 });
+      } else {
+        const id = nextTool(navTools, selTool, arrows[k]);
+        if (id) select({ kind: "tool", id });
+      }
+    } else if (k === "n" || k === "N" || k === "p" || k === "P") {
+      const id = cycleTool(navTools, selTool, k.toLowerCase() === "n" ? 1 : -1);
+      if (id) select({ kind: "tool", id });
+    } else if (k === "Enter") {
+      if (selTool) camera({ k: "tool", id: selTool });
+    } else if (k === "+" || k === "=") camera({ k: "zoom", by: 10 });
+    else if (k === "-" || k === "_") camera({ k: "zoom", by: -10 });
+    else if (k === "[") camera({ k: "orbit", az: -0.25, pol: 0 });
+    else if (k === "]") camera({ k: "orbit", az: 0.25, pol: 0 });
+    else if (k === "0" || k === "Home") focusBay(null);
+    else if (k >= "1" && k <= "5") focusBay(BAY_KEYS[Number(k) - 1]);
+    else if (k === "Escape") {
+      if (help) setHelp(false);
+      else select(null);
+    } else if (k === "?") setHelp((h) => !h);
+    else handled = false;
+    if (handled) e.preventDefault();
+  };
+
+  return (
+    <div
+      ref={ref}
+      className="relative h-full w-full outline-offset-[-3px] focus-visible:outline-2 focus-visible:outline-accent"
+      data-testid="scene"
+      tabIndex={0}
+      role="group"
+      aria-label="Fab floor, 3D view. Focus it and use the arrow keys to select tools. Press question mark for all keys."
+      onKeyDown={onKeyDown}
+      onPointerDown={() => ref.current?.focus({ preventScroll: true })}
+    >
+      {children}
+      <p className="sr-only" aria-live="polite">
+        {say}
+      </p>
+      <div className="absolute right-2 top-2 flex flex-col items-end gap-1">
+        <Btn onClick={() => setHelp((h) => !h)} aria-expanded={help} aria-controls="floor-keys">
+          Keyboard help
+        </Btn>
+        {help && (
+          <div id="floor-keys" className="max-w-[300px] rounded-sm border border-line bg-panel p-2.5 text-[12px] shadow-lg">
+            <p className="mb-1.5 font-medium">Keys while the floor has focus</p>
+            <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
+              {HELP.map(([key, what]) => (
+                <div key={key} className="contents">
+                  <dt className="num text-ink">{key}</dt>
+                  <dd className="text-muted">{what}</dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function FabScene({ onFps }: { onFps?: (n: number) => void }) {
   const layout = useMemo(() => buildLayout(), []);
   const focusBay = useFab((s) => s.focusBay);
   return (
-    <div className="relative h-full w-full" data-testid="scene">
+    <FloorKeys layout={layout}>
       <Canvas
         dpr={[1, 1.75]}
         shadows
@@ -445,7 +561,7 @@ export default function FabScene({ onFps }: { onFps?: (n: number) => void }) {
           Overview
         </button>
       </div>
-      <p className="pointer-events-none absolute bottom-2 right-2 rounded-xs bg-panel/80 px-1.5 text-[11px] text-muted">Drag to orbit, right-drag to pan, wheel to zoom, click a tool or FOUP</p>
-    </div>
+      <p className="pointer-events-none absolute bottom-2 right-2 rounded-xs bg-panel/80 px-1.5 text-[11px] text-muted">Drag to orbit, right-drag to pan, wheel to zoom, click a tool or FOUP. Keyboard: Tab here, then arrow keys.</p>
+    </FloorKeys>
   );
 }
