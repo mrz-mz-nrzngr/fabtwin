@@ -1,0 +1,39 @@
+source ws://127.0.0.1:18831: connecting
+source ws://127.0.0.1:18831: open (subscribed to spBv1.0/FabTwin/#)
+t=5s events {} rejected 0 | tools {"STANDBY":24} | wip 0 shipped 0 thr 0.0/h ct -s util 0% | vehicles moving 0 | spc 0/0/0 | ignored -
+t=10s events {"equipment.state_changed":6,"lot.started":1} rejected 0 | tools {"STANDBY":23,"PRODUCTIVE":1} | wip 1 shipped 0 thr 0.0/h ct -s util 4% | vehicles moving 1 | spc 0/0/0 | ignored -
+t=15s events {"equipment.state_changed":7,"lot.started":2} rejected 0 | tools {"PRODUCTIVE":2,"STANDBY":22} | wip 2 shipped 0 thr 0.0/h ct -s util 6% | vehicles moving 1 | spc 0/0/0 | ignored -
+t=20s events {"equipment.state_changed":10,"lot.started":3,"lot.completed":1} rejected 0 | tools {"PRODUCTIVE":2,"STANDBY":22} | wip 2 shipped 0 thr 0.0/h ct -s util 7% | vehicles moving 1 | spc 0/0/0 | ignored -
+t=25s events {"equipment.state_changed":10,"lot.started":3,"lot.completed":1} rejected 0 | tools {"PRODUCTIVE":2,"STANDBY":22} | wip 2 shipped 0 thr 0.0/h ct -s util 7% | vehicles moving 0 | spc 0/0/0 | ignored -
+  alarm.set EDGE_NODE_OFFLINE on ETC-01 (critical)
+  alarm.set EDGE_NODE_OFFLINE on ETC-02 (critical)
+  alarm.set EDGE_NODE_OFFLINE on ETC-03 (critical)
+t=30s events {"equipment.state_changed":16,"lot.started":6,"lot.completed":3,"alarm.set":3} rejected 0 | tools {"STANDBY":21,"PRODUCTIVE":3} | wip 3 shipped 0 thr 0.0/h ct -s util 8% | vehicles moving 1 | spc 1/0/0 | ignored -
+t=35s events {"equipment.state_changed":16,"lot.started":6,"lot.completed":3,"alarm.set":3} rejected 0 | tools {"STANDBY":21,"PRODUCTIVE":3} | wip 3 shipped 0 thr 0.0/h ct -s util 9% | vehicles moving 0 | spc 1/0/0 | ignored -
+t=40s events {"equipment.state_changed":22,"lot.started":9,"lot.completed":5,"alarm.set":3} rejected 0 | tools {"PRODUCTIVE":4,"STANDBY":20} | wip 4 shipped 0 thr 0.0/h ct -s util 10% | vehicles moving 3 | spc 1/0/0 | ignored -
+t=45s events {"equipment.state_changed":24,"lot.started":10,"lot.completed":6,"alarm.set":3} rejected 0 | tools {"PRODUCTIVE":4,"STANDBY":20} | wip 4 shipped 0 thr 0.0/h ct -s util 11% | vehicles moving 2 | spc 2/0/0 | ignored -
+t=50s events {"equipment.state_changed":24,"lot.started":10,"lot.completed":6,"alarm.set":3} rejected 0 | tools {"PRODUCTIVE":4,"STANDBY":20} | wip 4 shipped 0 thr 0.0/h ct -s util 12% | vehicles moving 1 | spc 2/0/0 | ignored -
+  alarm.cleared EDGE_NODE_OFFLINE on ETC-01
+  alarm.cleared EDGE_NODE_OFFLINE on ETC-02
+  alarm.cleared EDGE_NODE_OFFLINE on ETC-03
+t=55s events {"equipment.state_changed":33,"lot.started":15,"lot.completed":10,"alarm.set":3,"alarm.cleared":3} rejected 0 | tools {"PRODUCTIVE":5,"STANDBY":19} | wip 5 shipped 0 thr 0.0/h ct -s util 12% | vehicles moving 4 | spc 2/0/0 | ignored -
+t=60s events {"equipment.state_changed":33,"lot.started":15,"lot.completed":10,"alarm.set":3,"alarm.cleared":3} rejected 0 | tools {"PRODUCTIVE":5,"STANDBY":19} | wip 5 shipped 0 thr 0.0/h ct -s util 13% | vehicles moving 0 | spc 2/0/0 | ignored -
+t=65s events {"equipment.state_changed":37,"lot.started":17,"lot.completed":12,"alarm.set":3,"alarm.cleared":3} rejected 0 | tools {"PRODUCTIVE":5,"STANDBY":19} | wip 5 shipped 0 thr 0.0/h ct -s util 14% | vehicles moving 1 | spc 2/0/0 | ignored -
+t=70s events {"equipment.state_changed":44,"lot.started":21,"lot.completed":15,"alarm.set":3,"alarm.cleared":3} rejected 0 | tools {"STANDBY":18,"PRODUCTIVE":6} | wip 6 shipped 0 thr 0.0/h ct -s util 15% | vehicles moving 2 | spc 3/0/0 | ignored -
+t=75s events {"equipment.state_changed":48,"lot.started":23,"lot.completed":17,"alarm.set":3,"alarm.cleared":3} rejected 0 | tools {"STANDBY":18,"PRODUCTIVE":6} | wip 6 shipped 0 thr 0.0/h ct -s util 15% | vehicles moving 2 | spc 4/0/0 | ignored -
+source ws://127.0.0.1:18831: closed
+--- sample of the events received ---
+equipment.state_changed LTH-01  null->STANDBY
+equipment.state_changed ETC-01 L0001 null->PRODUCTIVE
+lot.started ETC-01 L0001
+equipment.state_changed LTH-02  null->STANDBY
+equipment.state_changed LTH-03  null->STANDBY
+equipment.state_changed ETC-02  null->STANDBY
+equipment.state_changed ETC-03  null->STANDBY
+equipment.state_changed LTH-01 L0002 STANDBY->PRODUCTIVE
+lot.started LTH-01 L0002
+lot.completed ETC-01 L0001
+equipment.state_changed ETC-01  PRODUCTIVE->STANDBY
+equipment.state_changed MET-01 L0001 null->PRODUCTIVE
+lot.started MET-01 L0001
+equipment.state_changed MET-02  null->STANDBY

@@ -100,6 +100,14 @@ describe("Sparkplug mapper", () => {
     expect(back.events[0]).toMatchObject({ type: "alarm.cleared", data: { code: "EDGE_NODE_OFFLINE" } });
   });
 
+  it("stamps an NDEATH with the host's receipt time, not the payload timestamp (section 5.5)", () => {
+    const { m } = mk();
+    m.handle("spBv1.0/Fab1/NBIRTH/Etch", msg(0, T0, [bd(4)]));
+    m.handle("spBv1.0/Fab1/DBIRTH/Etch/ETC-01", msg(1, T0, [str("State", "PRODUCTIVE")]));
+    const dead = m.handle("spBv1.0/Fab1/NDEATH/Etch", encodePayload({ timestamp: T0 - 3_600_000, metrics: [bd(4)] }));
+    expect(dead.events[0].t).toBe(T0);
+  });
+
   it("resolves aliases from the birth and asks for a rebirth when an alias is unknown", () => {
     const { m, rebirths } = mk();
     m.handle("spBv1.0/Fab1/NBIRTH/Met", msg(0, T0, [bd(0)]));

@@ -1,0 +1,35 @@
+[09:36:22] connecting to opc.tcp://localhost:48410/UA/FabTwin (security None)
+[09:36:22] session open
+[09:36:22] found 12 tools and 90 variables under Objects/FabTwin
+[09:36:22] subscribed (publishing interval 250 ms). FabTwin live mode: ws://localhost:8788
+[09:36:28] FabTwin connected (1 client)
+[09:36:32] 15 events published to 1 client(s); skipped names: ChamberTemperature
+[09:36:42] 27 events published to 1 client(s); skipped names: ChamberTemperature
+[09:36:52] 33 events published to 1 client(s); skipped names: ChamberTemperature
+[09:36:53] OPC UA connection lost, will retry
+[09:37:02] 49 events published to 1 client(s); skipped names: ChamberTemperature
+09:37:09.880Z :read_operational_limits       :70    dataValue =  { /* DataValue */
+ ...                                                   value: Variant(Scalar<Null>, value: <null>)
+ ...                                                   statusCode:      BadNodeIdUnknown (0x80340000)
+ ...                                                   serverTimestamp: null
+ ...                                                   sourceTimestamp: null
+ ...                                                }  for  ns=0;i=11713
+09:37:09.880Z :read_operational_limits       :70    dataValue =  { /* DataValue */
+ ...                                                   value: Variant(Scalar<Null>, value: <null>)
+ ...                                                   statusCode:      BadNodeIdUnknown (0x80340000)
+ ...                                                   serverTimestamp: null
+ ...                                                   sourceTimestamp: null
+ ...                                                }  for  ns=0;i=12167
+09:37:09.880Z :read_operational_limits       :70    dataValue =  { /* DataValue */
+ ...                                                   value: Variant(Scalar<Null>, value: <null>)
+ ...                                                   statusCode:      BadNodeIdUnknown (0x80340000)
+ ...                                                   serverTimestamp: null
+ ...                                                   sourceTimestamp: null
+ ...                                                }  for  ns=0;i=12168
+[09:37:09] OPC UA connection re-established
+[09:37:12] 67 events published to 1 client(s); skipped names: ChamberTemperature
+[09:37:22] 67 events published to 1 client(s); skipped names: ChamberTemperature
+[09:37:32] 71 events published to 1 client(s); skipped names: ChamberTemperature
+[09:37:42] 81 events published to 1 client(s); skipped names: ChamberTemperature
+[09:37:52] 97 events published to 0 client(s); skipped names: ChamberTemperature
+[09:38:02] 105 events published to 0 client(s); skipped names: ChamberTemperature

@@ -1,8 +1,8 @@
 import { Enum, Field, OneOf, Root, Type } from "protobufjs/light";
 
 /**
- * Sparkplug B payload, written here from the field numbers and types in section 6.4 of the
- * Sparkplug 3.0.0 specification. The upstream .proto file (Eclipse Tahu) is EPL-2.0 and is not
+ * Sparkplug B payload, written here from the field numbers and types in section 6.4.1 (schema) and
+ * 6.4.16 (data types) of the Sparkplug 3.0.0 specification. The upstream .proto file (Eclipse Tahu) is EPL-2.0 and is not
  * copied: this is an independent definition of the wire format. Only the parts FabTwin reads are
  * defined (Payload, Metric, DataType, and the scalar values). DataSet, Template, MetaData and
  * PropertySet are left out. protobufjs skips unknown fields on decode, so a payload that carries

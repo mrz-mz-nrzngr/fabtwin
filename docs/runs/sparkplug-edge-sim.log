@@ -1,0 +1,14 @@
+Sparkplug B edge simulator: 5 edge nodes, 12 devices, group FabTwin, broker mqtt://127.0.0.1:18830
+[Litho] connected, NBIRTH bdSeq=0
+[Etch] connected, NBIRTH bdSeq=0
+[Dep] connected, NBIRTH bdSeq=0
+[Cmp] connected, NBIRTH bdSeq=0
+[Metro] connected, NBIRTH bdSeq=0
+[Litho] rebirth requested
+[Etch] rebirth requested
+[Metro] rebirth requested
+[Dep] rebirth requested
+[Etch] connection dropped without DISCONNECT, the broker publishes the NDEATH will
+[Cmp] rebirth requested
+[Etch] connected, NBIRTH bdSeq=1
+done after 80 s, 0 lots shipped by the flow

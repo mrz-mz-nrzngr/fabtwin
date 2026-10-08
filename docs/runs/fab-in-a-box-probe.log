@@ -1,0 +1,27 @@
+source ws://127.0.0.1:8787: connecting
+source ws://127.0.0.1:8787: open
+t=5s events {"equipment.state_changed":9,"lot.started":2,"collection_event":2} rejected 0 | tools {"PRODUCTIVE":2,"STANDBY":22} | wip 2 shipped 0 thr 0.0/h ct -s util 3% | vehicles moving 0 | spc 0/0/0 | ignored -
+t=10s events {"equipment.state_changed":12,"lot.started":3,"collection_event":5,"lot.completed":2} rejected 0 | tools {"STANDBY":23,"PRODUCTIVE":1} | wip 2 shipped 0 thr 0.0/h ct -s util 3% | vehicles moving 2 | spc 0/0/0 | ignored -
+t=15s events {"equipment.state_changed":13,"lot.started":4,"collection_event":6,"lot.completed":2} rejected 0 | tools {"STANDBY":22,"PRODUCTIVE":2} | wip 2 shipped 0 thr 0.0/h ct -s util 4% | vehicles moving 0 | spc 0/0/0 | ignored -
+t=20s events {"equipment.state_changed":14,"lot.started":5,"collection_event":8,"lot.completed":2} rejected 0 | tools {"PRODUCTIVE":3,"STANDBY":21} | wip 3 shipped 0 thr 0.0/h ct -s util 5% | vehicles moving 1 | spc 0/0/0 | ignored -
+t=25s events {"equipment.state_changed":18,"lot.started":7,"collection_event":12,"lot.completed":4} rejected 0 | tools {"PRODUCTIVE":3,"STANDBY":21} | wip 3 shipped 0 thr 0.0/h ct -s util 6% | vehicles moving 2 | spc 1/0/0 | ignored -
+t=30s events {"equipment.state_changed":20,"lot.started":8,"collection_event":14,"lot.completed":5} rejected 0 | tools {"STANDBY":21,"PRODUCTIVE":3} | wip 3 shipped 0 thr 0.0/h ct -s util 6% | vehicles moving 1 | spc 1/0/0 | ignored -
+t=35s events {"equipment.state_changed":26,"lot.started":11,"collection_event":21,"lot.completed":8} rejected 0 | tools {"PRODUCTIVE":3,"STANDBY":21} | wip 4 shipped 0 thr 0.0/h ct -s util 7% | vehicles moving 4 | spc 2/0/0 | ignored -
+  alarm.set ChamberFault on LTH-02 (critical)
+t=40s events {"equipment.state_changed":28,"lot.started":12,"collection_event":22,"lot.completed":8,"alarm.set":1} rejected 0 | tools {"PRODUCTIVE":4,"UNSCHEDULED_DOWN":1,"STANDBY":19} | wip 4 shipped 0 thr 0.0/h ct -s util 8% | vehicles moving 1 | spc 2/0/0 | ignored -
+source ws://127.0.0.1:8787: closed
+--- sample of the events received ---
+equipment.state_changed LTH-01 L0001 PRODUCTIVE->STANDBY
+equipment.state_changed LTH-02  null->STANDBY
+equipment.state_changed ETC-01  STANDBY->PRODUCTIVE
+equipment.state_changed ETC-02  null->STANDBY
+equipment.state_changed DEP-01  null->STANDBY
+equipment.state_changed CMP-01  null->STANDBY
+equipment.state_changed MET-01  null->STANDBY
+equipment.state_changed MET-02  null->STANDBY
+lot.started ETC-01 L0001
+collection_event  L0002 LotReleased
+collection_event LTH-01  ProcessStarted
+equipment.state_changed LTH-01  STANDBY->PRODUCTIVE
+lot.started LTH-01 L0002
+collection_event ETC-01 L0001 ProcessCompleted

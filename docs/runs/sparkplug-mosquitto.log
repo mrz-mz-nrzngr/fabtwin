@@ -1,0 +1,26 @@
+1791452070: Info: running mosquitto as user: <user>.
+1791452072: New connection from 127.0.0.1:56647 on port 18830.
+1791452072: New client connected from 127.0.0.1:56647 as auto-4E256317-7224-324E-6BC9-DE9E17F6A60A (p4, c1, k60).
+1791452072: New connection from 127.0.0.1:56648 on port 18830.
+1791452072: New connection from 127.0.0.1:56649 on port 18830.
+1791452072: New connection from 127.0.0.1:56650 on port 18830.
+1791452072: New connection from 127.0.0.1:56651 on port 18830.
+1791452072: New connection from 127.0.0.1:56652 on port 18830.
+1791452072: New client connected from 127.0.0.1:56648 as fabtwin-edge-Litho-44966 (p4, c1, k60).
+1791452072: New client connected from 127.0.0.1:56649 as fabtwin-edge-Etch-44966 (p4, c1, k60).
+1791452072: New client connected from 127.0.0.1:56650 as fabtwin-edge-Dep-44966 (p4, c1, k60).
+1791452072: New client connected from 127.0.0.1:56651 as fabtwin-edge-Cmp-44966 (p4, c1, k60).
+1791452072: New client connected from 127.0.0.1:56652 as fabtwin-edge-Metro-44966 (p4, c1, k60).
+1791452075: New connection from 127.0.0.1:56659 on port 18831.
+1791452075: New client connected from 127.0.0.1:56659 as fabtwin-6f9f81e1 (p4, c1, k60).
+1791452102: Client fabtwin-edge-Etch-44966 [127.0.0.1:56649] disconnected: connection closed by client.
+1791452102: Client fabtwin-edge-Etch-44966 [127.0.0.1:56649] disconnected: connection closed by client.
+1791452127: New connection from 127.0.0.1:56670 on port 18830.
+1791452127: New client connected from 127.0.0.1:56670 as fabtwin-edge-Etch-44966 (p4, c1, k60).
+1791452150: Client fabtwin-6f9f81e1 [127.0.0.1:56659] disconnected: connection closed by client.
+1791452150: Client fabtwin-6f9f81e1 [127.0.0.1:56659] disconnected: connection closed by client.
+1791452152: Client fabtwin-edge-Litho-44966 [127.0.0.1:56648] disconnected.
+1791452152: Client fabtwin-edge-Etch-44966 [127.0.0.1:56670] disconnected.
+1791452152: Client fabtwin-edge-Dep-44966 [127.0.0.1:56650] disconnected.
+1791452152: Client fabtwin-edge-Cmp-44966 [127.0.0.1:56651] disconnected.
+1791452152: Client fabtwin-edge-Metro-44966 [127.0.0.1:56652] disconnected.

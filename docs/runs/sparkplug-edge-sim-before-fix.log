@@ -1,0 +1,54 @@
+Sparkplug B edge simulator: 5 edge nodes, 12 devices, group FabTwin, broker mqtt://127.0.0.1:18830
+[Litho] connected, NBIRTH bdSeq=0
+[Etch] connected, NBIRTH bdSeq=0
+[Dep] connected, NBIRTH bdSeq=0
+[Cmp] connected, NBIRTH bdSeq=0
+[Metro] connected, NBIRTH bdSeq=0
+[Etch] rebirth requested
+[Litho] rebirth requested
+[Metro] rebirth requested
+[Etch] connection dropped without DISCONNECT, the broker publishes the NDEATH will
+[Dep] rebirth requested
+[Cmp] rebirth requested
+[Etch] connected, NBIRTH bdSeq=1
+[Etch] connection dropped without DISCONNECT, the broker publishes the NDEATH will
+[Etch] connected, NBIRTH bdSeq=2
+[Etch] connection dropped without DISCONNECT, the broker publishes the NDEATH will
+[Etch] connected, NBIRTH bdSeq=3
+[Etch] connection dropped without DISCONNECT, the broker publishes the NDEATH will
+[Etch] connected, NBIRTH bdSeq=4
+[Etch] connection dropped without DISCONNECT, the broker publishes the NDEATH will
+[Etch] connected, NBIRTH bdSeq=5
+[Etch] connection dropped without DISCONNECT, the broker publishes the NDEATH will
+[Etch] connected, NBIRTH bdSeq=6
+[Etch] connection dropped without DISCONNECT, the broker publishes the NDEATH will
+[Etch] connected, NBIRTH bdSeq=7
+[Etch] connection dropped without DISCONNECT, the broker publishes the NDEATH will
+[Etch] connected, NBIRTH bdSeq=8
+[Etch] connection dropped without DISCONNECT, the broker publishes the NDEATH will
+[Etch] connected, NBIRTH bdSeq=9
+[Etch] connection dropped without DISCONNECT, the broker publishes the NDEATH will
+[Etch] connected, NBIRTH bdSeq=10
+[Etch] connection dropped without DISCONNECT, the broker publishes the NDEATH will
+[Etch] connected, NBIRTH bdSeq=11
+[Etch] connection dropped without DISCONNECT, the broker publishes the NDEATH will
+[Etch] connected, NBIRTH bdSeq=12
+[Etch] connection dropped without DISCONNECT, the broker publishes the NDEATH will
+[Etch] connected, NBIRTH bdSeq=13
+[Etch] connection dropped without DISCONNECT, the broker publishes the NDEATH will
+[Etch] connected, NBIRTH bdSeq=14
+[Etch] connection dropped without DISCONNECT, the broker publishes the NDEATH will
+[Etch] connected, NBIRTH bdSeq=15
+[Etch] connection dropped without DISCONNECT, the broker publishes the NDEATH will
+[Etch] connected, NBIRTH bdSeq=16
+[Etch] connection dropped without DISCONNECT, the broker publishes the NDEATH will
+[Etch] connected, NBIRTH bdSeq=17
+[Etch] connection dropped without DISCONNECT, the broker publishes the NDEATH will
+[Etch] connected, NBIRTH bdSeq=18
+[Etch] connection dropped without DISCONNECT, the broker publishes the NDEATH will
+[Etch] connected, NBIRTH bdSeq=19
+[Etch] connection dropped without DISCONNECT, the broker publishes the NDEATH will
+[Etch] connected, NBIRTH bdSeq=20
+[Etch] connection dropped without DISCONNECT, the broker publishes the NDEATH will
+done after 90 s, 0 lots shipped by the flow
+[Etch] connected, NBIRTH bdSeq=21

@@ -1,0 +1,203 @@
+# 2026-10-08T09:39:02Z  next start -p 3107 (Next.js 16.4.0, Node v22.22.0)
+
+$ curl -si 'http://localhost:3107/api/v1' | head -c 600
+HTTP/1.1 200 OK
+vary: rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch
+x-nextjs-cache: HIT
+access-control-allow-origin: *
+cache-control: no-store
+content-type: application/json
+Date: Thu, 08 Oct 2026 09:39:02 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+Transfer-Encoding: chunked
+
+{"name":"FabTwin MES API","version":"1.0.0","openapi":"/api/v1/openapi.json","endpoints":["/api/v1/lots","/api/v1/lots/{id}","/api/v1/wip","/api/v1/tools","/api/v1/tools/{id}","/api/v1/alarms","/api/v1/kpis","/api/v1/exports/{lot-history|shift-report}.{csv|json}"],"note":
+
+$ curl -si 'http://localhost:3107/api/v1/kpis?seed=1&t=7200' | head -c 900
+HTTP/1.1 200 OK
+vary: rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch
+access-control-allow-origin: *
+cache-control: no-store
+content-type: application/json
+Date: Thu, 08 Oct 2026 09:39:02 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+Transfer-Encoding: chunked
+
+{"meta":{"source":"simulation","simulated":true,"seed":1,"atS":7200,"at":"2026-01-12T08:00:00.000Z","shiftS":14400},"kpis":{"shipped":34,"shippedHot":5,"wip":61,"throughputPerHour":17,"meanCycleTimeS":7336,"meanHotCycleTimeS":5732,"xFactor":3.22,"onTimeDelivery":0.912,"queueTimeViolations":0,"qualityEscapes":0,"meanToolUtilization":0.51,"unscheduledDowntimeS":12053},"objectives":[{"id":"ship","label":"Ship 68 lots","target":68,"value":34,"met":false,"failed":false},{"id":"hotCt","label":"Hot-lot cycle time under 90 min","target":5400,"value":5732.257226898142,"met":false,"failed":true},
+
+$ curl -si 'http://localhost:3107/api/v1/tools?seed=1&t=7200&state=UNSCHEDULED_DOWN' | head -c 900
+HTTP/1.1 200 OK
+vary: rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch
+access-control-allow-origin: *
+cache-control: no-store
+content-type: application/json
+Date: Thu, 08 Oct 2026 09:39:03 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+Transfer-Encoding: chunked
+
+{"meta":{"source":"simulation","simulated":true,"seed":1,"atS":7200,"at":"2026-01-12T08:00:00.000Z","shiftS":14400},"tools":[{"id":"LTH-01","bay":"LITHO","state":"UNSCHEDULED_DOWN","reason":"failure","since":"2026-01-12T07:55:24.734Z","lotId":"L0045","recipe":null,"utilization":0.618,"lotsDone":23,"degradationWarning":false,"pmDueInS":2446,"stateSeconds":{"PRODUCTIVE":4448.303583761237,"STANDBY":96.12262187159804,"ENGINEERING":90,"SCHEDULED_DOWN":886.28708784632,"UNSCHEDULED_DOWN":1679.2867065208447}},{"id":"ETC-04","bay":"ETCH","state":"UNSCHEDULED_DOWN","reason":"failure","since":"202
+
+$ curl -si 'http://localhost:3107/api/v1/lots?seed=1&t=7200&limit=2' | head -c 1100
+HTTP/1.1 200 OK
+vary: rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch
+access-control-allow-origin: *
+cache-control: no-store
+content-type: application/json
+Date: Thu, 08 Oct 2026 09:39:03 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+Transfer-Encoding: chunked
+
+{"meta":{"source":"simulation","simulated":true,"seed":1,"atS":7200,"at":"2026-01-12T08:00:00.000Z","shiftS":14400},"total":61,"limit":2,"offset":0,"lots":[{"id":"L0001","route":"SOC-20","hot":false,"expedited":false,"held":false,"holdReason":null,"step":14,"steps":20,"recipe":"LITH-VIA","bay":"LITHO","status":"waiting","location":{"kind":"stocker","id":"ST-A"},"toolId":null,"releasedAt":"2026-01-12T05:32:36.600Z","due":"2026-01-12T09:46:21.600Z","queueTimeLeftS":null,"queueTimeViolations":0,"excursionFlag":false},{"id":"L0005","route":"SOC-20","hot":false,"expedited":false,"held":false,"holdReason":null,"step":14,"steps":20,"recipe":"LITH-VIA","bay":"LITHO","status":"waiting","location":{"kind":"stocker","id":"ST-B"},"toolId":null,"releasedAt":"2026-01-12T05:39:12.450Z","due":"2026
+
+$ curl -si 'http://localhost:3107/api/v1/lots/L0001?seed=1&t=7200' | head -c 900
+HTTP/1.1 200 OK
+vary: rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch
+access-control-allow-origin: *
+cache-control: no-store
+content-type: application/json
+Date: Thu, 08 Oct 2026 09:39:03 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+Transfer-Encoding: chunked
+
+{"meta":{"source":"simulation","simulated":true,"seed":1,"atS":7200,"at":"2026-01-12T08:00:00.000Z","shiftS":14400},"lot":{"id":"L0001","route":"SOC-20","hot":false,"expedited":false,"held":false,"holdReason":null,"step":14,"steps":20,"recipe":"LITH-VIA","bay":"LITHO","status":"waiting","location":{"kind":"stocker","id":"ST-A"},"toolId":null,"releasedAt":"2026-01-12T05:32:36.600Z","due":"2026-01-12T09:46:21.600Z","queueTimeLeftS":null,"queueTimeViolations":0,"excursionFlag":false},"shippedAt":null,"history":[{"lotId":"L0001","route":"SOC-20","hot":false,"atS":391.4,"at":"2026-01-12T06:0
+
+$ curl -si 'http://localhost:3107/api/v1/wip?seed=1&t=7200' | head -c 500
+HTTP/1.1 200 OK
+vary: rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch
+access-control-allow-origin: *
+cache-control: no-store
+content-type: application/json
+Date: Thu, 08 Oct 2026 09:39:03 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+Transfer-Encoding: chunked
+
+{"meta":{"source":"simulation","simulated":true,"seed":1,"atS":7200,"at":"2026-01-12T08:00:00.000Z","shiftS":14400},"totalLots":61,"byBay":[{"bay":"LITHO","lots":49},{"bay":"ETCH","lots":4},{"b
+
+$ curl -si 'http://localhost:3107/api/v1/alarms?seed=1&t=7200' | head -c 600
+HTTP/1.1 200 OK
+vary: rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch
+access-control-allow-origin: *
+cache-control: no-store
+content-type: application/json
+Date: Thu, 08 Oct 2026 09:39:03 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+Transfer-Encoding: chunked
+
+{"meta":{"source":"simulation","simulated":true,"seed":1,"atS":7200,"at":"2026-01-12T08:00:00.000Z","shiftS":14400},"total":66,"alarms":[{"id":"ALM-0066","code":"TOOL_DEGRADED","severity":"warning","text":"DEP-03 vibration and temperature trending high. Failure likely soon.","toolId":"DEP-03"
+
+$ curl -si 'http://localhost:3107/api/v1/kpis?seed=1&t=99999' | head -c 400
+HTTP/1.1 400 Bad Request
+vary: rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch
+access-control-allow-origin: *
+cache-control: no-store
+content-type: application/json
+Date: Thu, 08 Oct 2026 09:39:03 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+Transfer-Encoding: chunked
+
+{"error":{"code":"bad_parameter","message":"t must be a number from 0 to 14400"}}
+
+$ curl -si 'http://localhost:3107/api/v1/lots/NOPE?seed=1' | head -c 400
+HTTP/1.1 404 Not Found
+vary: rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch
+access-control-allow-origin: *
+cache-control: no-store
+content-type: application/json
+Date: Thu, 08 Oct 2026 09:39:03 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+Transfer-Encoding: chunked
+
+{"error":{"code":"not_found","message":"No lot NOPE at this time"}}
+
+$ curl -si 'http://localhost:3107/api/v1/kpis?source=live' | head -c 400
+HTTP/1.1 503 Service Unavailable
+vary: rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch
+access-control-allow-origin: *
+cache-control: no-store
+content-type: application/json
+Date: Thu, 08 Oct 2026 09:39:03 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+Transfer-Encoding: chunked
+
+{"error":{"code":"live_unavailable","message":"No live source is configured.
+
+$ curl -si 'http://localhost:3107/api/v1/exports/lot-history.csv?seed=1&t=7200' | head -c 700
+HTTP/1.1 200 OK
+vary: rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch
+access-control-allow-origin: *
+cache-control: no-store
+content-disposition: attachment; filename="lot-history.csv"
+content-type: text/csv; charset=utf-8
+Date: Thu, 08 Oct 2026 09:39:03 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+Transfer-Encoding: chunked
+
+lot_id,route,hot,t_s,timestamp,kind,tool_id,step_index,text
+L0049,PWR-12,false,50,2026-01-12T06:00:50.000Z,release,,,Released onto PWR-12
+L0034,SOC-20,false,50.6,2026-01-12T06:00:50.553Z,track-in,ETC-01,6,"Track-in on ETC-01, ETCH-POLY"
+L0012,SOC-20,false,59.4,2026-01-12T06:00:59.404Z,track-in,ETC-04,15,"Track-in on ETC-
+
+$ curl -si 'http://localhost:3107/api/v1/exports/shift-report.csv?seed=1' | head -c 900
+HTTP/1.1 200 OK
+vary: rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch
+access-control-allow-origin: *
+cache-control: no-store
+content-disposition: attachment; filename="shift-report.csv"
+content-type: text/csv; charset=utf-8
+Date: Thu, 08 Oct 2026 09:39:03 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+Transfer-Encoding: chunked
+
+section,key,value,comparison
+summary,grade,C,
+summary,score,6773,6773
+kpi,shipped,62,62
+kpi,shippedHot,9,9
+kpi,wip,66,66
+kpi,throughputPerHour,15.5,15.5
+kpi,meanCycleTimeS,8969,8969
+kpi,meanHotCycleTimeS,7607,7607
+kpi,xFactor,3.99,3.99
+kpi,onTimeDelivery,0.742,0.742
+kpi,queueTimeViolations,0,0
+kpi,qualityEscapes,1,1
+kpi,meanToolUtilization,0.481,0.481
+kpi,unscheduledDowntimeS,32646,32646
+objective,Ship 68 lots,62,missed
+objective,Hot-lot cycle time under 90 min,7607.152420013996,missed
+objective,Zero q
+
+$ curl -si 'http://localhost:3107/api/v1/exports/shift-report.json?seed=1' | head -c 500
+HTTP/1.1 200 OK
+vary: rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch
+access-control-allow-origin: *
+cache-control: no-store
+content-disposition: attachment; filename="shift-report.json"
+content-type: application/json
+Date: Thu, 08 Oct 2026 09:39:03 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+Transfer-Encoding: chunked
+
+{"simulated":true,"seed":1,"grade":"C","score":{"total":6773,"lines":[{"label":"Lots shipped","points":6200,"detail":"62 lots at 1
+
+$ curl -s http://localhost:3107/api/v1/openapi.json | python3 -c ... 
+3.1.0 FabTwin MES API 1.0.0
+['/alarms', '/exports/{file}', '/kpis', '/lots', '/lots/{id}', '/tools', '/tools/{id}', '/wip']
+
+determinism: two identical requests
+sha1 d511f70f2f5f d511f70f2f5f
+different seed:
+310fa6f6e198

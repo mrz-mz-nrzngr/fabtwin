@@ -1,0 +1,23 @@
+GemBench source: <workspace>/projects/gembench
+GemBench commit: fa50479 at <tmp>/gembench-fresh
+
+Build succeeded.
+    0 Warning(s)
+    0 Error(s)
+
+Time Elapsed 00:00:05.23
+[09:30:46] started 8 GemBench equipment simulators (HSMS ports 5101-5108), config in <tmpdir>/fabtwin-fab-in-a-box
+[09:30:46] all equipment selected and online (S1F13, S1F17), control state Online Remote
+[09:30:46] MES flow running. FabTwin live mode: ws://localhost:8787
+[09:30:56] wip 1, shipped 0, 15 events forwarded to 0 client(s)
+[09:31:02] FabTwin connected to the hub (1 client)
+[09:31:06] wip 2, shipped 0, 22 events forwarded to 1 client(s)
+[09:31:16] wip 2, shipped 0, 34 events forwarded to 1 client(s)
+[09:31:26] wip 3, shipped 0, 50 events forwarded to 1 client(s)
+[09:31:36] wip 4, shipped 0, 75 events forwarded to 1 client(s)
+[09:31:40] LTH-02 chamber fault raised (S2F41, HCACK 0)
+[09:31:46] wip 4, shipped 0, 89 events forwarded to 0 client(s)
+[09:31:56] wip 5, shipped 0, 111 events forwarded to 0 client(s)
+[09:32:02] LTH-02 chamber fault cleared (S2F41, HCACK 0)
+[09:32:06] wip 5, shipped 0, 131 events forwarded to 0 client(s)
+[09:32:06] duration reached, stopping

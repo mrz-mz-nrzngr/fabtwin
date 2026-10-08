@@ -25,7 +25,7 @@ import {
   TimestampsToReturn,
   UserTokenType,
 } from "node-opcua";
-import type { ClientSession, DataValue, MonitoringParametersOptions, ReferenceDescription } from "node-opcua";
+import type { ClientSession, DataValue, UserIdentityInfo, MonitoringParametersOptions, ReferenceDescription } from "node-opcua";
 import { EventHub } from "../../../scripts/lib/hub";
 import { OpcUaMapper } from "../../../src/integrations/opcua/mapper";
 import type { OpcValue } from "../../../src/integrations/opcua/mapper";
@@ -67,7 +67,7 @@ async function main() {
   });
   say(`connecting to ${ENDPOINT} (security ${SECURE ? "Basic256Sha256 SignAndEncrypt" : "None"})`);
   await client.connect(ENDPOINT);
-  const userIdentity = process.env.OPCUA_USER ? { type: UserTokenType.UserName as const, userName: process.env.OPCUA_USER, password: process.env.OPCUA_PASSWORD ?? "" } : undefined;
+  const userIdentity: UserIdentityInfo | undefined = process.env.OPCUA_USER ? { type: UserTokenType.UserName, userName: process.env.OPCUA_USER, password: process.env.OPCUA_PASSWORD ?? "" } : undefined;
   const session = await client.createSession(userIdentity);
   say("session open");
 
@@ -97,6 +97,7 @@ async function main() {
   for (const it of items) {
     const mi = ClientMonitoredItem.create(sub, { nodeId: it.nodeId, attributeId: AttributeIds.Value }, params, TimestampsToReturn.Both);
     mi.on("changed", (dv: DataValue) => {
+      // isGoodish() is node-opcua's own helper (severity bits below 0x10000000), not a term from the specification.
       const good = dv.statusCode === undefined || dv.statusCode.isGoodish() || dv.statusCode === StatusCodes.Good;
       const raw = dv.value?.value as unknown;
       const value: OpcValue = typeof raw === "number" || typeof raw === "boolean" || typeof raw === "string" ? raw : null;

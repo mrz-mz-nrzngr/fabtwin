@@ -1,0 +1,6 @@
+OPC UA sample server on opc.tcp://<host>.local:48410/UA/FabTwin with 12 tools
+--- outage: stopping server at 09:36:53
+--- restart server at 09:37:08
+OPC UA sample server on opc.tcp://<host>.local:48410/UA/FabTwin with 12 tools
+DEP-02 TOOL_FAULT set
+DEP-02 TOOL_FAULT cleared

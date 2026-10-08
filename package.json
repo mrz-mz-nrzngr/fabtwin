@@ -10,6 +10,7 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
+    "typecheck:services": "tsc --noEmit -p services/opcua-bridge/tsconfig.json",
     "test": "vitest run",
     "test:watch": "vitest",
     "calibrate": "tsx scripts/calibrate.ts",

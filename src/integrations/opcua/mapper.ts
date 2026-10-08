@@ -9,7 +9,7 @@ import type { NamedValue } from "../named";
  * publish for a tool and turns them into events through the shared convention (src/integrations/named.ts).
  *
  * Quality: a data change whose StatusCode is not Good does not update the tool. It raises OPCUA_BAD_QUALITY
- * on the tool until every variable is Good again (OPC UA Part 4, DataValue and StatusCode).
+ * on the tool until every variable is Good again (OPC 10000-4 sections 7.11.5 and 7.38; Uncertain counts as not Good here, a design decision).
  * Connection: when the session is lost, OPCUA_CONNECTION_LOST is set on every known tool, and cleared on reconnect.
  */
 export const CODE_BAD_QUALITY = "OPCUA_BAD_QUALITY";

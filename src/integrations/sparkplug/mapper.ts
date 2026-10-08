@@ -88,7 +88,8 @@ export class SparkplugMapper {
     }
     const key = `${tp.groupId}/${tp.edgeNodeId}`;
     const node = this.node(key);
-    const t = payload.timestamp ?? this.now();
+    // An NDEATH is usually the broker's Will Message, stamped when the node connected, so the host uses its own receipt time (section 5.5).
+    const t = tp.type === "NDEATH" ? this.now() : (payload.timestamp ?? this.now());
     const events: FabEvent[] = [];
 
     if (tp.type !== "NDEATH") this.checkSeq(tp.groupId, tp.edgeNodeId, node, payload, tp.type === "NBIRTH");
@@ -157,7 +158,7 @@ export class SparkplugMapper {
     return m;
   }
 
-  /** Sequence numbers run 0 to 255 and wrap (Sparkplug 3.0.0, section 6.4.x, payload seq rules). */
+  /** Sequence numbers run 0 to 255 and wrap (Sparkplug 3.0.0, section 6.4.5 Payload, and section 5.4 for the NBIRTH value). */
   private checkSeq(groupId: string, edgeNodeId: string, node: NodeMem, p: Payload, birth: boolean) {
     if (p.seq === undefined) return;
     if (birth) {
@@ -166,7 +167,7 @@ export class SparkplugMapper {
     }
     const expected = node.lastSeq === null ? null : (node.lastSeq + 1) % 256;
     node.lastSeq = p.seq;
-    // First sight of a node without its birth: we joined late, so ask it to republish (spec 5.x, optional for a host).
+    // First sight of a node without its birth: we joined late, so ask it to republish (Sparkplug 3.0.0, section 5.15: a host MAY send Node Control/Rebirth; the command itself is section 5.17).
     if (expected === null && !node.online) return this.requestRebirth(groupId, edgeNodeId);
     if (expected !== null && p.seq !== expected) {
       this.stats.seqGaps++;

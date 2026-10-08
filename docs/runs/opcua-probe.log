@@ -1,0 +1,57 @@
+source ws://127.0.0.1:8788: connecting
+source ws://127.0.0.1:8788: open
+t=5s events {"equipment.state_changed":15,"lot.started":3,"lot.completed":1} rejected 0 | tools {"STANDBY":22,"PRODUCTIVE":2} | wip 2 shipped 0 thr 0.0/h ct -s util 5% | vehicles moving 2 | spc 0/0/0 | ignored -
+t=10s events {"equipment.state_changed":15,"lot.started":3,"lot.completed":1} rejected 0 | tools {"STANDBY":22,"PRODUCTIVE":2} | wip 2 shipped 0 thr 0.0/h ct -s util 5% | vehicles moving 0 | spc 0/0/0 | ignored -
+t=15s events {"equipment.state_changed":19,"lot.started":5,"lot.completed":3} rejected 0 | tools {"STANDBY":22,"PRODUCTIVE":2} | wip 2 shipped 0 thr 0.0/h ct -s util 6% | vehicles moving 2 | spc 0/0/0 | ignored -
+t=20s events {"equipment.state_changed":20,"lot.started":6,"lot.completed":3} rejected 0 | tools {"PRODUCTIVE":3,"STANDBY":21} | wip 3 shipped 0 thr 0.0/h ct -s util 7% | vehicles moving 1 | spc 0/0/0 | ignored -
+t=25s events {"equipment.state_changed":24,"lot.started":8,"lot.completed":5} rejected 0 | tools {"PRODUCTIVE":3,"STANDBY":21} | wip 3 shipped 0 thr 0.0/h ct -s util 8% | vehicles moving 2 | spc 1/0/0 | ignored -
+  alarm.set OPCUA_CONNECTION_LOST on LTH-01 (critical)
+  alarm.set OPCUA_CONNECTION_LOST on LTH-02 (critical)
+  alarm.set OPCUA_CONNECTION_LOST on LTH-03 (critical)
+  alarm.set OPCUA_CONNECTION_LOST on ETC-01 (critical)
+  alarm.set OPCUA_CONNECTION_LOST on ETC-02 (critical)
+  alarm.set OPCUA_CONNECTION_LOST on ETC-03 (critical)
+  alarm.set OPCUA_CONNECTION_LOST on DEP-01 (critical)
+  alarm.set OPCUA_CONNECTION_LOST on DEP-02 (critical)
+  alarm.set OPCUA_CONNECTION_LOST on CMP-01 (critical)
+  alarm.set OPCUA_CONNECTION_LOST on CMP-02 (critical)
+  alarm.set OPCUA_CONNECTION_LOST on MET-01 (critical)
+  alarm.set OPCUA_CONNECTION_LOST on MET-02 (critical)
+t=30s events {"equipment.state_changed":24,"lot.started":8,"lot.completed":5,"alarm.set":12} rejected 0 | tools {"PRODUCTIVE":3,"STANDBY":21} | wip 3 shipped 0 thr 0.0/h ct -s util 8% | vehicles moving 1 | spc 1/0/0 | ignored -
+t=35s events {"equipment.state_changed":24,"lot.started":8,"lot.completed":5,"alarm.set":12} rejected 0 | tools {"PRODUCTIVE":3,"STANDBY":21} | wip 3 shipped 0 thr 0.0/h ct -s util 9% | vehicles moving 1 | spc 1/0/0 | ignored -
+t=40s events {"equipment.state_changed":24,"lot.started":8,"lot.completed":5,"alarm.set":12} rejected 0 | tools {"PRODUCTIVE":3,"STANDBY":21} | wip 3 shipped 0 thr 0.0/h ct -s util 9% | vehicles moving 1 | spc 1/0/0 | ignored -
+  alarm.cleared OPCUA_CONNECTION_LOST on LTH-01
+  alarm.cleared OPCUA_CONNECTION_LOST on LTH-02
+  alarm.cleared OPCUA_CONNECTION_LOST on LTH-03
+  alarm.cleared OPCUA_CONNECTION_LOST on ETC-01
+  alarm.cleared OPCUA_CONNECTION_LOST on ETC-02
+  alarm.cleared OPCUA_CONNECTION_LOST on ETC-03
+  alarm.cleared OPCUA_CONNECTION_LOST on DEP-01
+  alarm.cleared OPCUA_CONNECTION_LOST on DEP-02
+  alarm.cleared OPCUA_CONNECTION_LOST on CMP-01
+  alarm.cleared OPCUA_CONNECTION_LOST on CMP-02
+  alarm.cleared OPCUA_CONNECTION_LOST on MET-01
+  alarm.cleared OPCUA_CONNECTION_LOST on MET-02
+t=45s events {"equipment.state_changed":26,"lot.started":9,"lot.completed":8,"alarm.set":12,"alarm.cleared":12} rejected 0 | tools {"PRODUCTIVE":1,"STANDBY":23} | wip 3 shipped 0 thr 0.0/h ct -s util 9% | vehicles moving 2 | spc 1/0/1 | ignored -
+t=50s events {"equipment.state_changed":26,"lot.started":9,"lot.completed":8,"alarm.set":12,"alarm.cleared":12} rejected 0 | tools {"PRODUCTIVE":1,"STANDBY":23} | wip 3 shipped 0 thr 0.0/h ct -s util 8% | vehicles moving 2 | spc 1/0/1 | ignored -
+t=55s events {"equipment.state_changed":27,"lot.started":11,"lot.completed":9,"alarm.set":12,"alarm.cleared":12} rejected 0 | tools {"PRODUCTIVE":2,"STANDBY":22} | wip 3 shipped 0 thr 0.0/h ct -s util 8% | vehicles moving 3 | spc 1/0/1 | ignored -
+t=60s events {"equipment.state_changed":27,"lot.started":11,"lot.completed":9,"alarm.set":12,"alarm.cleared":12} rejected 0 | tools {"PRODUCTIVE":2,"STANDBY":22} | wip 3 shipped 0 thr 0.0/h ct -s util 8% | vehicles moving 1 | spc 1/0/1 | ignored -
+t=65s events {"equipment.state_changed":27,"lot.started":11,"lot.completed":9,"alarm.set":12,"alarm.cleared":12} rejected 0 | tools {"PRODUCTIVE":2,"STANDBY":22} | wip 3 shipped 0 thr 0.0/h ct -s util 8% | vehicles moving 1 | spc 1/0/1 | ignored -
+t=70s events {"equipment.state_changed":30,"lot.started":13,"lot.completed":10,"alarm.set":12,"alarm.cleared":12} rejected 0 | tools {"PRODUCTIVE":3,"STANDBY":21} | wip 3 shipped 0 thr 0.0/h ct -s util 8% | vehicles moving 2 | spc 1/0/1 | ignored -
+t=75s events {"equipment.state_changed":32,"lot.started":14,"lot.completed":11,"alarm.set":12,"alarm.cleared":12} rejected 0 | tools {"PRODUCTIVE":3,"STANDBY":21} | wip 3 shipped 0 thr 0.0/h ct -s util 8% | vehicles moving 0 | spc 1/0/1 | ignored -
+source ws://127.0.0.1:8788: closed
+--- sample of the events received ---
+equipment.state_changed LTH-01 L0001 null->PRODUCTIVE
+equipment.state_changed LTH-02  null->STANDBY
+equipment.state_changed LTH-03  null->STANDBY
+equipment.state_changed ETC-01  null->STANDBY
+equipment.state_changed ETC-02  null->STANDBY
+equipment.state_changed ETC-03  null->STANDBY
+equipment.state_changed DEP-01  null->STANDBY
+equipment.state_changed DEP-02  null->STANDBY
+equipment.state_changed CMP-01  null->STANDBY
+equipment.state_changed CMP-02  null->STANDBY
+equipment.state_changed MET-01  null->STANDBY
+equipment.state_changed MET-02  null->STANDBY
+lot.started LTH-01 L0001
+equipment.state_changed LTH-02 L0002 STANDBY->PRODUCTIVE

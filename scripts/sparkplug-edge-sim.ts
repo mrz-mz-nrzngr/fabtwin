@@ -43,6 +43,8 @@ class EdgeNode {
   bdSeq = -1;
   devices = new Map<string, DeviceState>();
   alive = false;
+  /** Set once the node has been dropped on purpose, so a revived node is not dropped again. */
+  killed = false;
 
   constructor(readonly id: string, readonly tools: FabTool[]) {
     for (const t of tools) this.devices.set(t.id, { state: "STANDBY", lotId: "", recipe: "", route: "", stepIndex: 0 });
@@ -102,6 +104,7 @@ class EdgeNode {
 
   kill() {
     this.alive = false;
+    this.killed = true;
     this.client.end(true);
     console.log(`[${this.id}] connection dropped without DISCONNECT, the broker publishes the NDEATH will`);
   }
@@ -149,12 +152,10 @@ const stop = fab.run(500);
 const started = Date.now();
 const timer = setInterval(() => {
   const el = (Date.now() - started) / 1000;
-  if (KILL_NODE && KILL_AT && el >= KILL_AT && nodes.get(Object.keys(NODE_OF).find((k) => NODE_OF[k] === KILL_NODE)!)?.alive) {
-    nodes.get(Object.keys(NODE_OF).find((k) => NODE_OF[k] === KILL_NODE)!)!.kill();
-  }
+  const victim = nodes.get(Object.keys(NODE_OF).find((k) => NODE_OF[k] === KILL_NODE) ?? "");
+  if (KILL_NODE && KILL_AT && el >= KILL_AT && victim?.alive && !victim.killed) victim.kill();
   if (KILL_NODE && REVIVE_AT && el >= REVIVE_AT) {
-    const n = nodes.get(Object.keys(NODE_OF).find((k) => NODE_OF[k] === KILL_NODE)!)!;
-    if (!n.alive && !n.client.connected && !n.client.reconnecting) n.connect();
+    if (victim && !victim.alive && !victim.client.connected && !victim.client.reconnecting) victim.connect();
   }
   if (DURATION && el >= DURATION) {
     clearInterval(timer);

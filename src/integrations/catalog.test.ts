@@ -32,6 +32,30 @@ describe("integrations catalog", () => {
     }
   });
 
+  it("assigns the tier each integration has earned", () => {
+    const tiers = Object.fromEntries(INTEGRATIONS.map((i) => [i.id, i.tier]));
+    expect(tiers).toEqual({
+      gem: "hardware-ready", // equipment simulators, not a physical tool
+      sparkplug: "live-tested", // a real Mosquitto broker
+      opcua: "hardware-ready", // a simulated OPC UA server
+      ws: "live-tested",
+      rest: "live-tested",
+      export: "live-tested",
+      stream: "live-tested",
+      compose: "not-proven",
+    });
+  });
+
+  it("states the same tier in the recorded run as the catalog does", () => {
+    const doc = readFileSync("docs/integration-runs.md", "utf8");
+    for (const i of INTEGRATIONS) {
+      const m = i.proof?.match(/section (.+)$/);
+      if (!m) continue;
+      const body = doc.split(`## ${m[1]}`)[1]?.split(/\n## /)[0] ?? "";
+      expect(body, i.id).toContain(`Tier (${i.id}): ${TIER_LABEL[i.tier]}`);
+    }
+  });
+
   it("links inside the app are absolute paths and the text has no em dashes", () => {
     for (const i of INTEGRATIONS) {
       for (const l of i.links ?? []) expect(l.href.startsWith("/")).toBe(true);
