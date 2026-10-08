@@ -91,7 +91,7 @@ export default function IntegrationsPage() {
           <p className="text-[15px] font-semibold tracking-tight">FabTwin</p>
           <p className="text-[11px] text-muted">Integrations</p>
         </div>
-        <Link href="/" className="ml-auto inline-flex min-h-11 items-center rounded-xs border border-line bg-raised px-3 text-[13px] text-ink hover:border-steel">
+        <Link href="/" className="ml-auto inline-flex min-h-[44px] items-center rounded-xs border border-line bg-raised px-3 text-[13px] text-ink hover:border-steel">
           Back to the console
         </Link>
       </header>

@@ -49,7 +49,7 @@ export function Attention({ compact = false }: { compact?: boolean }) {
                 <li key={a.id} className="rounded-xs border border-line bg-panel p-1.5">
                   <button
                     type="button"
-                    className="flex w-full items-start gap-1.5 text-left"
+                    className="flex w-full items-start gap-1.5 text-left max-md:min-h-[44px]"
                     onClick={() => select(a.lotId && !a.toolId ? { kind: "lot", id: a.lotId } : a.toolId ? { kind: "tool", id: a.toolId } : a.lotId ? { kind: "lot", id: a.lotId } : null)}
                   >
                     <span className="mt-0.5">
@@ -87,7 +87,7 @@ export function Attention({ compact = false }: { compact?: boolean }) {
           <ul className="flex flex-col gap-1">
             {risky.map((l) => (
               <li key={l.id} className="flex items-center gap-2 rounded-xs border border-line bg-panel p-1.5">
-                <button type="button" className="min-w-0 flex-1 text-left" onClick={() => select({ kind: "lot", id: l.id })}>
+                <button type="button" className="min-w-0 flex-1 text-left max-md:min-h-[44px]" onClick={() => select({ kind: "lot", id: l.id })}>
                   <span className="num text-[12px]">{l.id}</span> <span className="num text-[11px] text-muted">before {l.recipe}</span>
                   <span className={`num block text-[12px] ${l.qtLeft! < 0 ? "text-udt" : "text-sdt"}`}>
                     {l.qtLeft! < 0 ? `Over by ${fmtMin(-l.qtLeft!)}` : `${fmtMin(l.qtLeft!)} left`}
@@ -111,7 +111,7 @@ export function Attention({ compact = false }: { compact?: boolean }) {
           {snap.bays.map((b) => (
             <li key={b.id} className="rounded-xs border border-line bg-panel p-1.5">
               <div className="flex items-center justify-between gap-2">
-                <button type="button" className="text-left text-[12px] font-medium text-steel hover:text-ink" onClick={() => focusBay(b.id as BayId)} title="Fly the camera to this bay">
+                <button type="button" className="text-left text-[12px] font-medium text-steel hover:text-ink max-md:min-h-[44px] max-md:min-w-[44px]" onClick={() => focusBay(b.id as BayId)} title="Fly the camera to this bay">
                   {BAY_NAME[b.id]}
                 </button>
                 <span className="num text-[11px] text-muted">
@@ -122,7 +122,8 @@ export function Attention({ compact = false }: { compact?: boolean }) {
                 Rule
                 <select
                   aria-label={`Dispatch rule for ${BAY_NAME[b.id]}`}
-                  className="min-h-7 flex-1 rounded-xs border border-line bg-raised px-1.5 text-[12px] text-ink"
+                  name={`rule-${b.id}`}
+                  className="min-h-7 max-md:min-h-[44px] flex-1 rounded-xs border border-line bg-raised px-1.5 text-[12px] text-ink"
                   value={b.rule}
                   disabled={mode !== "sim"}
                   onChange={(e) => send({ type: "setRule", bay: b.id, rule: e.target.value as DispatchRule })}
@@ -145,7 +146,7 @@ export function Attention({ compact = false }: { compact?: boolean }) {
                           type="button"
                           onClick={() => select({ kind: "tool", id: t.id })}
                           aria-pressed={selection?.kind === "tool" && selection.id === t.id}
-                          className={`num flex min-h-11 min-w-11 items-center justify-center gap-1 rounded-xs border px-2 text-[12px] ${selection?.kind === "tool" && selection.id === t.id ? "border-accent bg-raised" : "border-line bg-raised"}`}
+                          className={`num flex min-h-[44px] min-w-[44px] items-center justify-center gap-1 rounded-xs border px-2 text-[12px] ${selection?.kind === "tool" && selection.id === t.id ? "border-accent bg-raised" : "border-line bg-raised"}`}
                         >
                           <StatusGlyph state={t.state} />
                           {t.id.slice(-2)}

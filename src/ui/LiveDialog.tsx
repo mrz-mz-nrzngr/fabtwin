@@ -55,26 +55,26 @@ export function LiveDialog({ onClose }: { onClose: () => void }) {
         {kind === "ws" ? (
           <label className="flex flex-col gap-1 text-[12px] text-muted">
             Socket URL (ws:// or wss://)
-            <input value={wsText} onChange={(e) => setWsText(e.target.value)} className={field} aria-invalid={!valid} spellCheck={false} />
+            <input name="live-ws-url" value={wsText} onChange={(e) => setWsText(e.target.value)} className={field} aria-invalid={!valid} spellCheck={false} />
           </label>
         ) : (
           <div className="flex flex-col gap-2">
             <label className="flex flex-col gap-1 text-[12px] text-muted">
               Broker WebSocket URL
-              <input value={broker} onChange={(e) => setBroker(e.target.value)} className={field} aria-invalid={!valid} spellCheck={false} />
+              <input name="live-broker-url" value={broker} onChange={(e) => setBroker(e.target.value)} className={field} aria-invalid={!valid} spellCheck={false} />
             </label>
             <label className="flex flex-col gap-1 text-[12px] text-muted">
               Sparkplug group id (empty means all groups)
-              <input value={group} onChange={(e) => setGroup(e.target.value)} className={field} spellCheck={false} />
+              <input name="live-group" value={group} onChange={(e) => setGroup(e.target.value)} className={field} spellCheck={false} />
             </label>
             <div className="grid grid-cols-2 gap-2">
               <label className="flex flex-col gap-1 text-[12px] text-muted">
                 Username (optional)
-                <input value={user} onChange={(e) => setUser(e.target.value)} className={field} autoComplete="off" />
+                <input name="live-user" value={user} onChange={(e) => setUser(e.target.value)} className={field} autoComplete="off" />
               </label>
               <label className="flex flex-col gap-1 text-[12px] text-muted">
                 Password (optional, kept in memory only)
-                <input type="password" value={pass} onChange={(e) => setPass(e.target.value)} className={field} autoComplete="off" />
+                <input type="password" name="live-pass" value={pass} onChange={(e) => setPass(e.target.value)} className={field} autoComplete="off" />
               </label>
             </div>
           </div>

@@ -34,7 +34,7 @@ export function DockTabs({ tab, setTab, tabs = DOCK_TABS }: { tab: DockTab; setT
           aria-selected={tab === t.id}
           aria-controls={`panel-${t.id}`}
           onClick={() => setTab(t.id)}
-          className={`min-h-9 shrink-0 border-b-2 px-3 text-[12px] ${tab === t.id ? "border-accent text-ink" : "border-transparent text-muted hover:text-ink"}`}
+          className={`min-h-9 shrink-0 max-md:min-h-[44px] max-md:min-w-[44px] border-b-2 px-3 text-[12px] ${tab === t.id ? "border-accent text-ink" : "border-transparent text-muted hover:text-ink"}`}
         >
           {t.label}
           {t.id === "alarms" && active > 0 && <span className="num ml-1.5 text-[11px] text-sdt">{active}</span>}
@@ -81,7 +81,7 @@ function EquipmentTable() {
           return (
             <tr key={t.id} data-selected={sel}>
               <td>
-                <button type="button" className="num text-steel hover:text-accent" onClick={() => select({ kind: "tool", id: t.id })}>
+                <button type="button" className="num text-steel hover:text-accent max-md:inline-flex max-md:min-h-[44px] max-md:min-w-[44px] max-md:items-center" onClick={() => select({ kind: "tool", id: t.id })}>
                   {t.id}
                 </button>
               </td>
@@ -152,15 +152,16 @@ function LotSearch() {
           Search
           <input
             type="search"
+            name="lot-search"
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="Lot id, route, recipe or tool"
-            className="num min-h-8 w-56 rounded-xs border border-line bg-raised px-2 text-[12px] text-ink placeholder:text-muted"
+            className="num min-h-8 max-md:min-h-[44px] w-56 rounded-xs border border-line bg-raised px-2 text-[12px] text-ink placeholder:text-muted"
           />
         </label>
         <div role="group" aria-label="Lot filter" className="flex flex-wrap gap-1">
           {FILTERS.map(([k, label]) => (
-            <button key={k} type="button" aria-pressed={f === k} onClick={() => setF(k)} className={`min-h-7 rounded-xs border px-2 text-[12px] ${f === k ? "border-steel bg-raised text-ink" : "border-line text-muted hover:text-ink"}`}>
+            <button key={k} type="button" aria-pressed={f === k} onClick={() => setF(k)} className={`min-h-7 max-md:min-h-[44px] rounded-xs border px-2 text-[12px] ${f === k ? "border-steel bg-raised text-ink" : "border-line text-muted hover:text-ink"}`}>
               {label}
             </button>
           ))}
@@ -191,7 +192,7 @@ function LotSearch() {
                 return (
                   <tr key={l.id} data-selected={selection?.kind === "lot" && selection.id === l.id}>
                     <td className="num">
-                      <button type="button" className="text-steel hover:text-accent" onClick={() => select({ kind: "lot", id: l.id })}>
+                      <button type="button" className="text-steel hover:text-accent max-md:inline-flex max-md:min-h-[44px] max-md:min-w-[44px] max-md:items-center" onClick={() => select({ kind: "lot", id: l.id })}>
                         {l.id}
                       </button>{" "}
                       {(l.hot || l.prio === 1) && <HotTag expedited={l.prio === 1} />}
@@ -210,7 +211,7 @@ function LotSearch() {
             {shippedRows.map(([id, v]) => (
               <tr key={id} data-selected={selection?.kind === "lot" && selection.id === id}>
                 <td className="num">
-                  <button type="button" className="text-steel hover:text-accent" onClick={() => select({ kind: "lot", id })}>
+                  <button type="button" className="text-steel hover:text-accent max-md:inline-flex max-md:min-h-[44px] max-md:min-w-[44px] max-md:items-center" onClick={() => select({ kind: "lot", id })}>
                     {id}
                   </button>
                 </td>
@@ -275,12 +276,12 @@ function AlarmList() {
                 <td className="num text-muted">{a.code}</td>
                 <td className="num">
                   {a.toolId && (
-                    <button type="button" className="text-steel hover:text-accent" onClick={() => select({ kind: "tool", id: a.toolId! })}>
+                    <button type="button" className="text-steel hover:text-accent max-md:inline-flex max-md:min-h-[44px] max-md:min-w-[44px] max-md:items-center" onClick={() => select({ kind: "tool", id: a.toolId! })}>
                       {a.toolId}
                     </button>
                   )}{" "}
                   {a.lotId && (
-                    <button type="button" className="text-steel hover:text-accent" onClick={() => select({ kind: "lot", id: a.lotId! })}>
+                    <button type="button" className="text-steel hover:text-accent max-md:inline-flex max-md:min-h-[44px] max-md:min-w-[44px] max-md:items-center" onClick={() => select({ kind: "lot", id: a.lotId! })}>
                       {a.lotId}
                     </button>
                   )}

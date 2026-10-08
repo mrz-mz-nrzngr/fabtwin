@@ -20,6 +20,8 @@ import type { Dir } from "./nav";
 import type { BayId, LotView } from "@/sim/types";
 
 const MAX_FOUPS = 200;
+/** Instance capacity for vehicles. The fab runs 14, and a draw call with more instances than the buffer holds is a GL error. */
+const MAX_VEHICLES = 32;
 const tmp = new THREE.Object3D();
 const col = new THREE.Color();
 
@@ -288,7 +290,7 @@ function Movers({ layout }: { layout: SceneLayout }) {
       if (foup.instanceColor) foup.instanceColor.needsUpdate = true;
     }
     // Vehicles move every frame, and the FOUP each one is handling is lifted or lowered with it.
-    veh.count = snap.vehicles.length;
+    veh.count = Math.min(snap.vehicles.length, MAX_VEHICLES);
     let foupDirty = false;
     snap.vehicles.forEach((v, i) => {
       const s = vehicleS(v, t);
@@ -349,7 +351,7 @@ function Movers({ layout }: { layout: SceneLayout }) {
 
   return (
     <>
-      <instancedMesh ref={vehRef} args={[undefined, undefined, 12]} frustumCulled={false}>
+      <instancedMesh ref={vehRef} args={[undefined, undefined, MAX_VEHICLES]} frustumCulled={false}>
         <boxGeometry args={[1, 1, 1]} />
         <meshStandardMaterial color="#ffffff" roughness={0.5} metalness={0.3} />
       </instancedMesh>

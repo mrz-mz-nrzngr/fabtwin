@@ -175,6 +175,10 @@ The **Integrations** page (`/integrations`, linked from the console) lists every
 | Event stream from the bridges | out | Live-tested | the headless probe |
 | Docker compose plant in a box | | Not proven | not written |
 
+![Live mode connected to fab in a box: tools, lots and a chamber fault from eight GemBench simulators](docs/screenshots/37-live-floor-1440.png)
+
+![The Integrations page at 1440 px](docs/screenshots/34-integrations-1440.png)
+
 Live-tested means a real server that is not our code. Hardware-ready means a simulator of the device, with the edge code for the real one included. None of the integrations has been run against a physical tool, a PLC or a vendor's product, and none is in the account-ready tier.
 
 ### Fab in a box

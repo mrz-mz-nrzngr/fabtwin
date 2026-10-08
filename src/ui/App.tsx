@@ -187,10 +187,10 @@ export function App() {
           )}
         </main>
         {selection && (
-          <div className="enter fixed inset-x-0 bottom-[60px] z-30 max-h-[62vh] overflow-y-auto border-t border-accent bg-panel scroll-thin" data-testid="sheet">
+          <div className="enter fixed inset-x-0 bottom-[78px] z-30 max-h-[58vh] overflow-y-auto border-t border-accent bg-panel scroll-thin" data-testid="sheet">
             <Context />
             <div className="sticky bottom-0 border-t border-line bg-panel p-2">
-              <Btn className="min-h-11 w-full" onClick={() => select(null)}>
+              <Btn className="min-h-[44px] w-full" onClick={() => select(null)}>
                 Close details
               </Btn>
             </div>
@@ -203,7 +203,7 @@ export function App() {
               type="button"
               aria-current={mtab === k ? "page" : undefined}
               onClick={() => setMtab(k)}
-              className={`min-h-14 text-[13px] ${mtab === k ? "border-t-2 border-accent text-ink" : "border-t-2 border-transparent text-muted"}`}
+              className={`min-h-[56px] text-[13px] ${mtab === k ? "border-t-2 border-accent text-ink" : "border-t-2 border-transparent text-muted"}`}
             >
               {k === "floor" ? "Floor" : k === "alerts" ? "Alerts" : k === "lots" ? "Lots" : "Charts"}
             </button>
@@ -271,11 +271,11 @@ function MobileBar({ onBrief, onReport }: { onBrief: () => void; onReport: () =>
           <p className="text-[11px] text-muted">Score</p>
           <p className="num text-[16px] leading-tight">{(snap?.score ?? 0).toLocaleString("en-US")}</p>
         </div>
-        {phase === "ended" ? <Btn variant="primary" className="min-h-11" onClick={onReport}>Report</Btn> : <Btn className="min-h-11" onClick={onBrief}>Briefing</Btn>}
+        {phase === "ended" ? <Btn variant="primary" className="min-h-[44px]" onClick={onReport}>Report</Btn> : <Btn className="min-h-[44px]" onClick={onBrief}>Briefing</Btn>}
       </div>
       <div role="group" aria-label="Time controls" className="mt-2 grid grid-cols-4">
         {SPEED_BTN.map(([v, label]) => (
-          <button key={v} type="button" aria-pressed={speed === v} disabled={phase === "ended"} onClick={() => setSpeed(v)} className={`num min-h-11 border border-line text-[13px] first:rounded-l-xs last:rounded-r-xs -ml-px first:ml-0 ${speed === v ? "relative z-10 border-accent bg-accent font-medium text-accent-ink" : "bg-raised text-ink"} disabled:text-muted`}>
+          <button key={v} type="button" aria-pressed={speed === v} disabled={phase === "ended"} onClick={() => setSpeed(v)} className={`num min-h-[44px] border border-line text-[13px] first:rounded-l-xs last:rounded-r-xs -ml-px first:ml-0 ${speed === v ? "relative z-10 border-accent bg-accent font-medium text-accent-ink" : "bg-raised text-ink"} disabled:text-muted`}>
             {label}
           </button>
         ))}

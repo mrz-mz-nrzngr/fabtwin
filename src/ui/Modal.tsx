@@ -42,7 +42,7 @@ export function Modal({ title, onClose, children, wide = false, closeLabel = "Cl
       >
         <div className="flex items-center justify-between border-b border-line px-4 py-2.5">
           <h2 className="text-[15px] font-semibold">{title}</h2>
-          <button type="button" onClick={onClose} className="min-h-8 px-1 text-[12px] text-steel hover:text-ink">
+          <button type="button" onClick={onClose} className="min-h-8 max-md:min-h-[44px] px-1 text-[12px] text-steel hover:text-ink">
             {closeLabel}
           </button>
         </div>

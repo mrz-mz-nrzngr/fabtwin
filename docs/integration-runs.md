@@ -198,3 +198,15 @@ kpi,shipped,62,62
 The OpenAPI document at `/api/v1/openapi.json` is OpenAPI 3.1.0, "FabTwin MES API" 1.0.0, with the 8 paths the server answers. The same request twice returned byte-identical bodies (`sha1 d511f70f2f5f` both times) and seed 8 gave a different one, which is the determinism the simulation promises.
 
 Scope: the data is the deterministic simulation, and every response says `meta.simulated: true`. The `source=live` path needs `FABTWIN_LIVE_URLS` on a self-hosted server and was not exercised in this run (the 503 above is the unconfigured answer); the unit tests in `src/server/api.test.ts` cover it with a fake feed.
+
+## Browser checks
+
+Run on 2026-10-08 against the production build (`next start -p 3107`) in headless Chrome, driven with `chrome-devtools-axi`, at 1440 px wide and at 390 px with mobile and touch emulation. Pages were checked through accessibility snapshots, DOM queries and the console. Screenshots were saved to `docs/screenshots/` (27 to 45) for the README.
+
+- **Floor and MES screens at 1440 px:** the 3D floor, all six dock tabs (Equipment, Lots, WIP by step, Utilization, SPC, Alarms) and the KPI strip rendered with content for a running shift.
+- **Console:** one library warning remains (`THREE.Clock has been deprecated`, from react-three-fiber). Two earlier findings were fixed: 256 GL errors per context from the vehicle instance buffer (it held 12, the fab has 14 vehicles), and form fields without a name.
+- **Keyboard:** with the floor focused, ArrowRight moved the selection and the live region said "CMP-01 selected. Productive, running lot L0023."; N moved to the next tool; Enter flew the camera; `?` opened the key list; the first Escape closed it and the second cleared the selection.
+- **Integrations page:** eight rows, tiers as in the catalog table above, no horizontal overflow at 1440 or 390 px, empty console.
+- **Live mode with fab in a box running** (`docs/runs/fab-in-a-box-browser-session.log`): the dialog reported `Status: open, 29 events, 0 rejected`, the top bar showed LIVE, tools showed Productive with lot ids from the GemBench simulators, and the Alarms tab listed `ChamberFault` on LTH-02 raised at 00:00:53 and cleared. The host reported 7 lots shipped after seven minutes.
+- **390 px:** no horizontal scroll on the briefing, floor map, alerts, lots, charts, tool sheet or Integrations page. The audit found that touch targets measured 36 px, because the page root is 13 px and Tailwind's `min-h-11` is in rem. They are now `44px` on phones (tabs, filters, lot links, selects, buttons), the 2D map's tools are 48 px, and the tool sheet no longer overlaps the bottom bar.
+

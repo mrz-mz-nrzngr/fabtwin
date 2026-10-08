@@ -17,7 +17,7 @@ export function Btn({ variant = "default", className = "", ...p }: ButtonHTMLAtt
     <button
       type="button"
       {...p}
-      className={`min-h-7 rounded-xs border px-2.5 py-1 text-[12px] leading-tight transition-colors duration-150 ${VARIANT[variant]} ${className}`}
+      className={`min-h-7 max-md:min-h-[44px] rounded-xs border px-2.5 py-1 text-[12px] leading-tight transition-colors duration-150 ${VARIANT[variant]} ${className}`}
     />
   );
 }

@@ -48,10 +48,11 @@ export function Briefing({ onClose }: { onClose: () => void }) {
             <label className="flex items-center gap-2 text-[12px] text-muted">
               Shift seed
               <input
+                name="shift-seed"
                 inputMode="numeric"
                 value={draft}
                 onChange={(e) => setDraft(e.target.value.replace(/[^0-9]/g, "").slice(0, 6))}
-                className="num min-h-8 w-24 rounded-xs border border-line bg-raised px-2 text-[13px] text-ink"
+                className="num min-h-8 max-md:min-h-[44px] w-24 rounded-xs border border-line bg-raised px-2 text-[13px] text-ink"
                 aria-invalid={!valid}
               />
               {!valid && <span className="text-udt">Use a number from 1 to 999999.</span>}
@@ -60,7 +61,7 @@ export function Briefing({ onClose }: { onClose: () => void }) {
           <div className="flex flex-wrap gap-2">
             <Btn
               variant="primary"
-              className="min-h-10 px-4 text-[13px]"
+              className="min-h-[44px] px-4 text-[13px]"
               disabled={!valid}
               onClick={() => {
                 if (!running && parsed !== seed) init(parsed);
