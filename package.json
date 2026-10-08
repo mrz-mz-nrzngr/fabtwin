@@ -18,7 +18,8 @@
     "fab-in-a-box": "bash scripts/fab-in-a-box.sh",
     "live-probe": "tsx scripts/live-probe.ts",
     "opcua-sample-server": "npm --prefix services/opcua-bridge run sample-server",
-    "opcua-bridge": "npm --prefix services/opcua-bridge run bridge"
+    "opcua-bridge": "npm --prefix services/opcua-bridge run bridge",
+    "openapi": "tsx scripts/write-openapi.ts"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.9",
@@ -30,6 +31,7 @@
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "three": "^0.186.1",
+    "ws": "^8.22.0",
     "zustand": "^5.0.15"
   },
   "devDependencies": {
@@ -46,7 +48,6 @@
     "tailwindcss": "^4.3.3",
     "tsx": "^4.23.15",
     "typescript": "^6.0.3",
-    "vitest": "^5.0.3",
-    "ws": "^8.22.0"
+    "vitest": "^5.0.3"
   }
 }

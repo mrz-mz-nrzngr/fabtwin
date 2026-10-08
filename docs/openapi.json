@@ -1,0 +1,1587 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "FabTwin MES API",
+    "version": "1.0.0",
+    "description": "Read-only REST API over FabTwin's fab model: lots, WIP by step, tool states, alarms and KPIs, plus CSV and JSON exports. By default it serves the deterministic simulation as a function of seed and t, and every response says so in meta.simulated. With FABTWIN_LIVE_URLS set on a self-hosted server, source=live serves the state derived from a live FabTwin event feed.",
+    "license": {
+      "name": "MIT",
+      "identifier": "MIT"
+    }
+  },
+  "servers": [
+    {
+      "url": "/api/v1"
+    }
+  ],
+  "paths": {
+    "/lots": {
+      "get": {
+        "operationId": "listLots",
+        "summary": "Lots in the fab",
+        "parameters": [
+          {
+            "name": "source",
+            "in": "query",
+            "description": "simulation (default) or live. live needs FABTWIN_LIVE_URLS on a self-hosted server.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "simulation",
+                "live"
+              ],
+              "default": "simulation"
+            }
+          },
+          {
+            "name": "seed",
+            "in": "query",
+            "description": "Simulation seed. The same seed and t always give the same answer.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9999,
+              "default": 1
+            }
+          },
+          {
+            "name": "t",
+            "in": "query",
+            "description": "Simulated seconds into the 4 hour shift.",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 14400,
+              "default": 7200
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "waiting",
+                "transit",
+                "atTool",
+                "processing"
+              ]
+            }
+          },
+          {
+            "name": "bay",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "LITHO",
+                "ETCH",
+                "DEP",
+                "CMP",
+                "METRO"
+              ]
+            }
+          },
+          {
+            "name": "hot",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "held",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "description": "Matches lot id, route, recipe or tool id.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 500,
+              "default": 100
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lots, sorted by id",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotList"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "A parameter is invalid",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The live source is not configured",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/lots/{id}": {
+      "get": {
+        "operationId": "getLot",
+        "summary": "One lot with its genealogy",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "source",
+            "in": "query",
+            "description": "simulation (default) or live. live needs FABTWIN_LIVE_URLS on a self-hosted server.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "simulation",
+                "live"
+              ],
+              "default": "simulation"
+            }
+          },
+          {
+            "name": "seed",
+            "in": "query",
+            "description": "Simulation seed. The same seed and t always give the same answer.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9999,
+              "default": 1
+            }
+          },
+          {
+            "name": "t",
+            "in": "query",
+            "description": "Simulated seconds into the 4 hour shift.",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 14400,
+              "default": 7200
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The lot and its history",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "A parameter is invalid",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such lot",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The live source is not configured",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/wip": {
+      "get": {
+        "operationId": "getWip",
+        "summary": "WIP by process step and by bay",
+        "parameters": [
+          {
+            "name": "source",
+            "in": "query",
+            "description": "simulation (default) or live. live needs FABTWIN_LIVE_URLS on a self-hosted server.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "simulation",
+                "live"
+              ],
+              "default": "simulation"
+            }
+          },
+          {
+            "name": "seed",
+            "in": "query",
+            "description": "Simulation seed. The same seed and t always give the same answer.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9999,
+              "default": 1
+            }
+          },
+          {
+            "name": "t",
+            "in": "query",
+            "description": "Simulated seconds into the 4 hour shift.",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 14400,
+              "default": 7200
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "WIP",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Wip"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "A parameter is invalid",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The live source is not configured",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tools": {
+      "get": {
+        "operationId": "listTools",
+        "summary": "Tool states (SEMI E10 states)",
+        "parameters": [
+          {
+            "name": "source",
+            "in": "query",
+            "description": "simulation (default) or live. live needs FABTWIN_LIVE_URLS on a self-hosted server.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "simulation",
+                "live"
+              ],
+              "default": "simulation"
+            }
+          },
+          {
+            "name": "seed",
+            "in": "query",
+            "description": "Simulation seed. The same seed and t always give the same answer.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9999,
+              "default": 1
+            }
+          },
+          {
+            "name": "t",
+            "in": "query",
+            "description": "Simulated seconds into the 4 hour shift.",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 14400,
+              "default": 7200
+            }
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/E10State"
+            }
+          },
+          {
+            "name": "bay",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "LITHO",
+                "ETCH",
+                "DEP",
+                "CMP",
+                "METRO"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tools",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ToolList"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "A parameter is invalid",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The live source is not configured",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tools/{id}": {
+      "get": {
+        "operationId": "getTool",
+        "summary": "One tool with its recent alarms",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "source",
+            "in": "query",
+            "description": "simulation (default) or live. live needs FABTWIN_LIVE_URLS on a self-hosted server.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "simulation",
+                "live"
+              ],
+              "default": "simulation"
+            }
+          },
+          {
+            "name": "seed",
+            "in": "query",
+            "description": "Simulation seed. The same seed and t always give the same answer.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9999,
+              "default": 1
+            }
+          },
+          {
+            "name": "t",
+            "in": "query",
+            "description": "Simulated seconds into the 4 hour shift.",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 14400,
+              "default": 7200
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The tool",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ToolDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "A parameter is invalid",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such tool",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The live source is not configured",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/alarms": {
+      "get": {
+        "operationId": "listAlarms",
+        "summary": "Alarm log, newest first",
+        "parameters": [
+          {
+            "name": "source",
+            "in": "query",
+            "description": "simulation (default) or live. live needs FABTWIN_LIVE_URLS on a self-hosted server.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "simulation",
+                "live"
+              ],
+              "default": "simulation"
+            }
+          },
+          {
+            "name": "seed",
+            "in": "query",
+            "description": "Simulation seed. The same seed and t always give the same answer.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9999,
+              "default": 1
+            }
+          },
+          {
+            "name": "t",
+            "in": "query",
+            "description": "Simulated seconds into the 4 hour shift.",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 14400,
+              "default": 7200
+            }
+          },
+          {
+            "name": "active",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "severity",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "info",
+                "warning",
+                "critical"
+              ]
+            }
+          },
+          {
+            "name": "tool",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 500,
+              "default": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Alarms",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlarmList"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "A parameter is invalid",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The live source is not configured",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/kpis": {
+      "get": {
+        "operationId": "getKpis",
+        "summary": "KPIs, shift objectives and transport",
+        "parameters": [
+          {
+            "name": "source",
+            "in": "query",
+            "description": "simulation (default) or live. live needs FABTWIN_LIVE_URLS on a self-hosted server.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "simulation",
+                "live"
+              ],
+              "default": "simulation"
+            }
+          },
+          {
+            "name": "seed",
+            "in": "query",
+            "description": "Simulation seed. The same seed and t always give the same answer.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9999,
+              "default": 1
+            }
+          },
+          {
+            "name": "t",
+            "in": "query",
+            "description": "Simulated seconds into the 4 hour shift.",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 14400,
+              "default": 7200
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "KPIs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Kpis"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "A parameter is invalid",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The live source is not configured",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/exports/{file}": {
+      "get": {
+        "operationId": "export",
+        "summary": "CSV and JSON exports",
+        "description": "lot-history.(csv|json): every genealogy entry of every lot up to t, or one lot with ?lot=. shift-report.(csv|json): the full shift report for a seed, with the autopilot comparison.",
+        "parameters": [
+          {
+            "name": "file",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "lot-history.csv",
+                "lot-history.json",
+                "shift-report.csv",
+                "shift-report.json"
+              ]
+            }
+          },
+          {
+            "name": "lot",
+            "in": "query",
+            "description": "lot-history only",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "source",
+            "in": "query",
+            "description": "simulation (default) or live. live needs FABTWIN_LIVE_URLS on a self-hosted server.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "simulation",
+                "live"
+              ],
+              "default": "simulation"
+            }
+          },
+          {
+            "name": "seed",
+            "in": "query",
+            "description": "Simulation seed. The same seed and t always give the same answer.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9999,
+              "default": 1
+            }
+          },
+          {
+            "name": "t",
+            "in": "query",
+            "description": "Simulated seconds into the 4 hour shift.",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 14400,
+              "default": 7200
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The export",
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "A parameter is invalid",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown export or lot",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The live source is not configured",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "code",
+              "message"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "error"
+        ],
+        "additionalProperties": false
+      },
+      "E10State": {
+        "type": "string",
+        "enum": [
+          "PRODUCTIVE",
+          "STANDBY",
+          "ENGINEERING",
+          "SCHEDULED_DOWN",
+          "UNSCHEDULED_DOWN"
+        ]
+      },
+      "Meta": {
+        "type": "object",
+        "properties": {
+          "source": {
+            "type": "string",
+            "enum": [
+              "simulation",
+              "live"
+            ]
+          },
+          "simulated": {
+            "type": "boolean"
+          },
+          "seed": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "atS": {
+            "type": "number"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "shiftS": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "source",
+          "simulated",
+          "seed",
+          "atS",
+          "at",
+          "shiftS"
+        ],
+        "additionalProperties": false
+      },
+      "Lot": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "route": {
+            "type": "string"
+          },
+          "hot": {
+            "type": "boolean"
+          },
+          "expedited": {
+            "type": "boolean"
+          },
+          "held": {
+            "type": "boolean"
+          },
+          "holdReason": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "operator",
+              "spc",
+              null
+            ]
+          },
+          "step": {
+            "type": "integer"
+          },
+          "steps": {
+            "type": "integer"
+          },
+          "recipe": {
+            "type": "string"
+          },
+          "bay": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "waiting",
+              "transit",
+              "atTool",
+              "processing",
+              "done"
+            ]
+          },
+          "location": {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "stocker",
+                  "tool",
+                  "vehicle",
+                  "gone"
+                ]
+              },
+              "id": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "kind",
+              "id"
+            ],
+            "additionalProperties": false
+          },
+          "toolId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "releasedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "due": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "queueTimeLeftS": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "queueTimeViolations": {
+            "type": "integer"
+          },
+          "excursionFlag": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "route",
+          "hot",
+          "expedited",
+          "held",
+          "holdReason",
+          "step",
+          "steps",
+          "recipe",
+          "bay",
+          "status",
+          "location",
+          "toolId",
+          "releasedAt",
+          "due",
+          "queueTimeLeftS",
+          "queueTimeViolations",
+          "excursionFlag"
+        ],
+        "additionalProperties": false
+      },
+      "LotList": {
+        "type": "object",
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/Meta"
+          },
+          "total": {
+            "type": "integer"
+          },
+          "limit": {
+            "type": "integer"
+          },
+          "offset": {
+            "type": "integer"
+          },
+          "lots": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Lot"
+            }
+          }
+        },
+        "required": [
+          "meta",
+          "total",
+          "limit",
+          "offset",
+          "lots"
+        ],
+        "additionalProperties": false
+      },
+      "HistoryRow": {
+        "type": "object",
+        "properties": {
+          "lotId": {
+            "type": "string"
+          },
+          "route": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "hot": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "atS": {
+            "type": "number"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "toolId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "stepIndex": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "text": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "lotId",
+          "route",
+          "hot",
+          "atS",
+          "at",
+          "kind",
+          "toolId",
+          "stepIndex",
+          "text"
+        ],
+        "additionalProperties": false
+      },
+      "LotDetail": {
+        "type": "object",
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/Meta"
+          },
+          "lot": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/Lot"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "shippedAt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "history": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HistoryRow"
+            }
+          }
+        },
+        "required": [
+          "meta",
+          "lot",
+          "shippedAt",
+          "history"
+        ],
+        "additionalProperties": false
+      },
+      "Tool": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "bay": {
+            "type": "string"
+          },
+          "state": {
+            "$ref": "#/components/schemas/E10State"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "since": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lotId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "recipe": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "utilization": {
+            "type": "number"
+          },
+          "lotsDone": {
+            "type": "integer"
+          },
+          "degradationWarning": {
+            "type": "boolean"
+          },
+          "pmDueInS": {
+            "type": "number"
+          },
+          "stateSeconds": {
+            "type": "object",
+            "properties": {
+              "PRODUCTIVE": {
+                "type": "number"
+              },
+              "STANDBY": {
+                "type": "number"
+              },
+              "ENGINEERING": {
+                "type": "number"
+              },
+              "SCHEDULED_DOWN": {
+                "type": "number"
+              },
+              "UNSCHEDULED_DOWN": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "PRODUCTIVE",
+              "STANDBY",
+              "ENGINEERING",
+              "SCHEDULED_DOWN",
+              "UNSCHEDULED_DOWN"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "id",
+          "bay",
+          "state",
+          "reason",
+          "since",
+          "lotId",
+          "recipe",
+          "utilization",
+          "lotsDone",
+          "degradationWarning",
+          "pmDueInS",
+          "stateSeconds"
+        ],
+        "additionalProperties": false
+      },
+      "ToolList": {
+        "type": "object",
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/Meta"
+          },
+          "tools": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Tool"
+            }
+          }
+        },
+        "required": [
+          "meta",
+          "tools"
+        ],
+        "additionalProperties": false
+      },
+      "Alarm": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "info",
+              "warning",
+              "critical"
+            ]
+          },
+          "text": {
+            "type": "string"
+          },
+          "toolId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "lotId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "setAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "clearedAt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "active": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "severity",
+          "text",
+          "toolId",
+          "lotId",
+          "setAt",
+          "clearedAt",
+          "active"
+        ],
+        "additionalProperties": false
+      },
+      "ToolDetail": {
+        "type": "object",
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/Meta"
+          },
+          "tool": {
+            "$ref": "#/components/schemas/Tool"
+          },
+          "recentAlarms": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Alarm"
+            }
+          }
+        },
+        "required": [
+          "meta",
+          "tool",
+          "recentAlarms"
+        ],
+        "additionalProperties": false
+      },
+      "AlarmList": {
+        "type": "object",
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/Meta"
+          },
+          "total": {
+            "type": "integer"
+          },
+          "alarms": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Alarm"
+            }
+          }
+        },
+        "required": [
+          "meta",
+          "total",
+          "alarms"
+        ],
+        "additionalProperties": false
+      },
+      "Wip": {
+        "type": "object",
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/Meta"
+          },
+          "totalLots": {
+            "type": "integer"
+          },
+          "byBay": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "bay": {
+                  "type": "string"
+                },
+                "lots": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "bay",
+                "lots"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "byStep": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "recipe": {
+                  "type": "string"
+                },
+                "bay": {
+                  "type": "string"
+                },
+                "waiting": {
+                  "type": "integer"
+                },
+                "inTransit": {
+                  "type": "integer"
+                },
+                "inTool": {
+                  "type": "integer"
+                },
+                "held": {
+                  "type": "integer"
+                },
+                "total": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "recipe",
+                "bay",
+                "waiting",
+                "inTransit",
+                "inTool",
+                "held",
+                "total"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "meta",
+          "totalLots",
+          "byBay",
+          "byStep"
+        ],
+        "additionalProperties": false
+      },
+      "Kpis": {
+        "type": "object",
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/Meta"
+          },
+          "kpis": {
+            "type": "object",
+            "properties": {
+              "shipped": {
+                "type": "integer"
+              },
+              "shippedHot": {
+                "type": "integer"
+              },
+              "wip": {
+                "type": "integer"
+              },
+              "throughputPerHour": {
+                "type": "number"
+              },
+              "meanCycleTimeS": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "meanHotCycleTimeS": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "xFactor": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "onTimeDelivery": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "queueTimeViolations": {
+                "type": "integer"
+              },
+              "qualityEscapes": {
+                "type": "integer"
+              },
+              "meanToolUtilization": {
+                "type": "number"
+              },
+              "unscheduledDowntimeS": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "shipped",
+              "shippedHot",
+              "wip",
+              "throughputPerHour",
+              "meanCycleTimeS",
+              "meanHotCycleTimeS",
+              "xFactor",
+              "onTimeDelivery",
+              "queueTimeViolations",
+              "qualityEscapes",
+              "meanToolUtilization",
+              "unscheduledDowntimeS"
+            ],
+            "additionalProperties": false
+          },
+          "objectives": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "target": {
+                  "type": "number"
+                },
+                "value": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "met": {
+                  "type": "boolean"
+                },
+                "failed": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "id",
+                "label",
+                "target",
+                "value",
+                "met",
+                "failed"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "score": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "transport": {
+            "type": "object",
+            "properties": {
+              "cells": {
+                "type": "integer"
+              },
+              "vehicleWaitS": {
+                "type": "number"
+              },
+              "blockedNow": {
+                "type": "integer"
+              },
+              "ordersQueued": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "cells",
+              "vehicleWaitS",
+              "blockedNow",
+              "ordersQueued"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "meta",
+          "kpis",
+          "objectives",
+          "score",
+          "transport"
+        ],
+        "additionalProperties": false
+      }
+    }
+  }
+}
